@@ -1,0 +1,940 @@
+---
+title: ' PPV and NPV with the eGFR 40% decline at end of 6y for each NA and MA group
+  and also combined'
+author: Daniel Montemayor and Rabiul Islam<br><small>Center for Renal Precision Medicine<br>University
+  of Texas Health San Antonio School of Medicine</small>
+date: "<small>`r Sys.Date()`</small>"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    number_sections: yes
+    toc_float:
+      collapsed: no
+    code_folding: hide
+    theme: cerulean
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+  word_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+![Center for Renal Precision Medicine](https://dmontemayor.github.io/assets/Long_SOM/horizontal/JPG/UTHSA_Long-SOM_H_CMYK.jpg)
+
+# Brief
++PPV and NPV with eGFR decline of 40% in each of the bins for the normo, micro, and normal+Micro goup
++ pertition by Adenine Tertiles for NA, MA, and NA+MA groups.
++estimate PPV and NPV wrt years for each teritle 
++Positive event and negative events were estimate by removing the NAN value with patients
++prevalence rate (%)=(positive events/positive events+negative events)x100]: link: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4022000/
+ 
+ 
+ ```{r}
+knitr::opts_chunk$set(message = FALSE, warning=FALSE)
+```
+ 
+```{r requirements, message=FALSE, warning=FALSE}
+#Requirements
+requirements <- c("dplyr","reshape","ggplot2","caret","regclass","InformationValue","ISLR","lmtest","stats","epiDisplay","epicalc")
+#CRAN repository
+repos <- "http://cran.us.r-project.org"
+
+#install and load missing requirements
+for (pack in requirements){
+  if( !is.element(pack, .packages(all.available = TRUE)) ) {
+    #install.packages(pack, repos = repos)
+    install.packages(pack)
+  }
+  library(pack, character.only = TRUE)
+}
+```
+
+```{r constants}
+rm(list=ls())
+#Constants
+MWade = 135.13 # molecular weights for adenine in g/mol
+MWcre = 113.12 #molecular weights for creatinine in g/mol
+
+#Random number seed
+set.seed(10079)
+
+```
+
+```{r download}
+#get data
+rawdata <- read.csv("RedCapUp2.csv")
+```
+
+```{r exclusioncriteria}
+#remove patients with no adenine values
+rawdata <- rawdata[!is.na(rawdata$Adenine..nM.uM.), ]
+```
+
+# Display Adenine cutoff values between tertiles
+```{r partition}
+#Roman 
+#rawdata$acr<-(rawdata$urine_albumin_v3y0/rawdata$urine_creatinine_v3y0)*100
+#select normogroup
+#normopats <- rawdata$acr <30
+#micropats <- rawdata$acr >=30 & rawdata$acr <300
+
+#get ACR in units of mg/mmol (Dan)
+rawdata$acr<-(rawdata$urine_albumin_v3y0/rawdata$urine_creatinine_v3y0)*1000/88.42
+
+#select normogroup
+normopats <- rawdata$acr <3
+micropats <- rawdata$acr >=3 & rawdata$acr <30
+print(paste("number of patients with normo-albuminuria = ", sum(normopats, na.rm = TRUE)))
+print(paste("number of patients with micro-albuminuria = ", sum(micropats, na.rm = TRUE)))
+```
+
+# get adenine tertiles cutoff values
+```{r adeninecutoff}
+quants <- quantile(rawdata$Adenine..nM.uM., c(0,1/3,2/3,1), na.rm = TRUE)
+print(paste("tertile cutoffs in (nm/um)= ", paste(quants, collapse=", ")))
+print(paste("tertile cutoffs in (mg/g)= ", paste(quants*MWcre/MWade, collapse=", ")))
+```
+
+```{r partitionwithtertile}
+T1pats <- rawdata$Adenine..nM.uM. >= quants[1] & rawdata$Adenine..nM.uM. < quants[2]
+T2pats <- rawdata$Adenine..nM.uM. >= quants[2] & rawdata$Adenine..nM.uM. < quants[3]
+T3pats <- rawdata$Adenine..nM.uM. >= quants[3]
+print(paste("Total number of patients ", sum(!is.na(rawdata$Adenine..nM.uM.))))
+
+print(paste("number of patients in T1 ", sum(T1pats, na.rm = TRUE)))
+print(paste("number of patients in T2 ", sum(T2pats, na.rm = TRUE)))
+print(paste("number of patients in T3 ", sum(T3pats, na.rm = TRUE)))
+```
+
+```{r outcome40}
+#select eGFR
+egfrcols <- names(rawdata)[grep("egfr_cric_v", names(rawdata))]
+#loop over years and count events for each year
+for (year in 1:7){
+  #print(year)
+  #calculate 40% decline at each year
+  t1 <- rawdata[, egfrcols[year+1]]  #EGFR[,year]
+  t0 <- rawdata[, egfrcols[1]] #rawdata$egfr_cric_v3y0
+  rawdata[paste("outcome40",year, sep = "_")] = ((t1-t0)/t0 < -.40)   #| (t2==1)
+}
+```
+
+# Adenine and clinical Variable preprocessing to apply glm 
+```{r predictor}
+impute<-function(x){
+  replace(x, x==0, min(x[x>0], na.rm = TRUE)/2)
+}
+#predictor is log2 adenine
+rawdata$predictor<- log2(impute(rawdata$Adenine..nM.uM.))
+
+#Clinical varible normalization based on z-score
+rawdata$age<-scale(rawdata$age_integer_v3y0)
+rawdata$hemoglobin<-scale(rawdata$hemoglobin_a1c_v3y0)
+rawdata$map<-scale(rawdata$map_v3y0)
+rawdata$bmi<-scale(rawdata$bmi_v3y0)
+rawdata$egfr<-scale(rawdata$egfr_ckd_epi_v3y0)
+rawdata$logacr<-scale(log2(rawdata$acr))
+```
+
+```{r BTest}
+pval_arr <- c()
+pval_norm<-c()
+pval_micro<-c()
+
+gain_arr<-c()
+testname<-c()
+testname_norm<-c()
+testname_micro<-c()
+pval_nm<-c()
+testname_nm<-c()
+```
+
+
+# Normal Group
+
+## Clinical parameter (CP): Positive Predictive value and Negative Predictive value for each year (1 to 6)
+```{r Normal_CP}
+#define conditions like clinical parameters (CP) 
+CP<-c("age","hemoglobin","map","bmi","egfr","logacr")
+
+#make a dataframe to hold results for each year and group
+dfResults<-data.frame(matrix(nrow=6, ncol = 7))
+colnames(dfResults)<-c("tertile","year","PPV","NPV","P_event","N_event","prevalence [%]")
+
+
+#Extract time to events columns from rawdata
+outcomes<-names(rawdata)[grep("outcome",names(rawdata))]
+#cbind q1, q2, and q3
+Qdata<-cbind(T1pats,T2pats,T3pats)
+Q<-c("T1pats","T2pats","T3pats")
+
+#Loop over tertile
+for (j in 1:3){
+  #Loop over year
+  for (i in 1:6){
+    data<-cbind(rawdata[outcomes[i]],rawdata[CP])
+    TerPats<-Qdata[,Q[j]]
+    idx<-which(TerPats & normopats)
+    COVdata<-na.omit(data[idx,])
+    event<-sum(data[outcomes[i]][idx,],na.rm = TRUE)
+    event_no<-sum(!data[outcomes[i]][idx,],na.rm = TRUE)
+    if(event!=0){
+    #Define formula and training the glm model
+    mod_formula <- as.formula(paste(outcomes[i],paste(CP,collapse = "+"),sep="~"))
+    mod <- glm(formula = mod_formula, family = binomial, data = COVdata)
+  
+  
+    ###################Make confusion matrix from glm model############
+    #use model to predict probability of default
+    pred<- predict(mod, data = COVdata, type="response")
+    #convert defaults from "Yes" and "No" to 1's and 0's
+    ActualLabel <- ifelse(COVdata[outcomes[i]]=="TRUE", 1, 0)
+    optimal <- optimalCutoff(ActualLabel, pred)[1]
+    #create confusion matrix
+    r=confusionMatrix(ActualLabel, pred,threshold = optimal)
+    r
+    #rows are predicted and culumns are actual
+    TN=r[1,1]
+    FN=r[1,2]
+    FP=r[2,1]
+    TP=r[2,2]
+    
+    PPV1=TP/(TP+FP)
+    NPV1=TN/(TN+FN)
+  
+    ################Book keeping column#################
+    #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<-i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-round(PPV1,2)
+    dfResults[i,"NPV"]<-round(NPV1,2)
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }else{
+     #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<- i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-0
+    dfResults[i,"NPV"]<-0
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }
+
+  }
+  print(dfResults)
+}
+```
+
+
+## Clinical parameter and Adenine (CP+AD): Positive Predictive value and Negative Predictive value for each year (1 to 6)
+```{r Normal_PPVwithTERTILE}
+#define conditions like clinical parameters (CP) 
+CP<-c("predictor","age","hemoglobin","map","bmi","egfr","logacr")
+
+#make a dataframe to hold results for each year and group
+dfResults<-data.frame(matrix(nrow=6, ncol = 7))
+colnames(dfResults)<-c("tertile","year","PPV","NPV","P_event","N_event","prevalence [%]")
+
+
+#Extract time to events columns from rawdata
+outcomes<-names(rawdata)[grep("outcome",names(rawdata))]
+#cbind q1, q2, and q3
+Qdata<-cbind(T1pats,T2pats,T3pats)
+Q<-c("T1pats","T2pats","T3pats")
+
+#Loop over tertile
+for (j in 1:3){
+  #Loop over year
+  for (i in 1:6){
+    data<-cbind(rawdata[outcomes[i]],rawdata[CP])
+    TerPats<-Qdata[,Q[j]]
+    idx<-which(TerPats & normopats)
+    COVdata<-na.omit(data[idx,])
+    event<-sum(data[outcomes[i]][idx,],na.rm = TRUE)
+    event_no<-sum(!data[outcomes[i]][idx,],na.rm = TRUE)
+    if(event!=0){
+    #Define formula and training the glm model
+    mod_formula <- as.formula(paste(outcomes[i],paste(CP,collapse = "+"),sep="~"))
+    mod <- glm(formula = mod_formula, family = binomial, data = COVdata)
+  
+  
+    ###################Make confusion matrix from glm model############
+    #use model to predict probability of default
+    pred<- predict(mod, data = COVdata, type="response")
+    #convert defaults from "Yes" and "No" to 1's and 0's
+    ActualLabel <- ifelse(COVdata[outcomes[i]]=="TRUE", 1, 0)
+    optimal <- optimalCutoff(ActualLabel, pred)[1]
+    #create confusion matrix
+    r=confusionMatrix(ActualLabel, pred,threshold = optimal)
+  
+    #True posive value and Negative Predictive value value
+    TN=r[1,1]
+    FN=r[1,2]
+    FP=r[2,1]
+    TP=r[2,2]
+    
+    PPV1=TP/(TP+FP)
+    NPV1=TN/(TN+FN)
+  
+    ################Book keeping column#################
+    #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<-i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-round(PPV1,2)
+    dfResults[i,"NPV"]<-round(NPV1,2)
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no  
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }else{
+     #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<- i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-0
+    dfResults[i,"NPV"]<-0
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no  
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }
+
+  }
+  print(dfResults)
+}
+```
+
+
+## Normal group: likelihood ratio test for nested models (CP vs CP+Adenine). lrtest is a generic function for carrying out likelihood ratio tests. The default method can be employed for comparing nested (generalized) linear models. Link: https://www.rdocumentation.org/packages/lmtest/versions/0.9-39/topics/lrtest
+
+```{r ttestNormal}
+pval_norm<-c()
+#define conditions like clinical parameters (CP) 
+CP<-c("age","hemoglobin","map","bmi","egfr","logacr")
+#define conditions like clinical parameters (CP) 
+CPAD<-c("predictor","age","hemoglobin","map","bmi","egfr","logacr")
+
+#make a dataframe to hold results for each year and group
+dfResults<-data.frame(matrix(nrow=6, ncol = 5))
+colnames(dfResults)<-c("tertile","year","prevalence [%]","LRT-p","gain")
+
+#Extract time to events columns from rawdata
+outcomes<-names(rawdata)[grep("outcome",names(rawdata))]
+#cbind q1, q2, and q3
+Qdata<-cbind(T1pats,T2pats,T3pats)
+Q<-c("T1pats","T2pats","T3pats")
+#Loop over tertile
+for (j in 1:3){
+  #Loop over year
+  for (i in 1:6){
+    #CPdata for CP model
+    CPdata<-cbind(rawdata[outcomes[i]],rawdata[CP])
+    #ADdata for CP+Ad model
+    ADdata<-cbind(rawdata[outcomes[i]],rawdata[CPAD])
+    #patients with tertiles
+    TerPats<-Qdata[,Q[j]]
+    #index with tertiles and normal Albuminiria 
+    idx<-which(TerPats & normopats)
+    #COVdata for CP and ADCOVdata for CP+Ad
+    COVdata<-na.omit(CPdata[idx,])
+    ADCOVdata<-na.omit(ADdata[idx,])
+    
+    #Count the positive events
+    event<-sum(CPdata[outcomes[i]][idx,],na.rm = TRUE)
+    event_no<-sum(!CPdata[outcomes[i]][idx,],na.rm = TRUE)
+    if(event!=0){
+      #Define formula for CP and CP+Ad and training the glm model
+      mod_formula <- as.formula(paste(outcomes[i],paste(CP,collapse = "+"),sep="~"))
+      A_mod_formula <- as.formula(paste(outcomes[i],paste(CPAD,collapse = "+"),sep="~"))
+    
+      mod <- glm(formula = mod_formula, family = binomial, data = COVdata)
+      A_mod <- glm(formula = A_mod_formula, family = binomial, data = ADCOVdata)
+      
+      #Gain estimation
+      A1<-lroc(mod,graph = FALSE)
+      A2<-lroc(A_mod, graph = FALSE)
+      gain<-A2$auc-A1$auc
+      #perform likelihood ratio test for differences in models
+      modeltest<-lrtest(A_mod, mod)
+     
+    ################Book keeping column#################
+      #Save each tertile
+      dfResults[i,"tertile"]<-j
+      #Save each year outcome
+      dfResults[i,"year"]<-i
+      dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+      
+      #Save "Chisq"
+      #csq<-signif(modeltest[4],digit = 4)
+      #dfResults[i,"Chisq"]<-as.numeric(csq[2,1])
+      #Save gain
+      dfResults[i,"gain"]<-gain
+      #Save each model p-value
+      pval<-modeltest$p.value
+      pval_arr <- c(pval_arr, pval)
+      pval_norm<-c(pval_norm, pval)
+      testname<-c(testname,paste(c("Norm",i,j), collapse="-"))
+      testname_norm<-c(testname_norm,paste(c("Norm",i,j), collapse="-"))
+      #Save p-value
+      dfResults[i,"LRT-p"]<-modeltest$p.value
+      
+    }else{
+      #Save each tertile
+      dfResults[i,"tertile"]<-j
+      #Save each year outcome
+      dfResults[i,"year"]<- i
+      dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+      
+      #dfResults[i,"Chisq"]<-"No"
+      #Save gain
+      dfResults[i,"gain"]<-"No"
+      #Save PPV and NPV value
+      dfResults[i,"LRT-p"]<-"No"
+    }
+  }
+  print(dfResults)
+}
+```
+
+## multilpe comparision for normal gourp
+```{r}
+Admat_norm<-c("pval_norm","addPval_norm","models_norm")
+adjPvalue_norm<-p.adjust(pval_norm, method = "BH")
+Admat_nomr<-c("pval_norm","addPval_norm","models_norm")
+Adv_norm<-cbind(pval_norm,adjPvalue_norm,testname_norm)
+print(Adv_norm)
+```
+
+
+# Micro group
+
+## Clinical parameter (CP): Positive Predictive value and Negative Predictive value for each year (1 to 6)
+```{r Micro_CP}
+#define conditions like clinical parameters (CP) 
+CP<-c("age","hemoglobin","map","bmi","egfr","logacr")
+
+#make a dataframe to hold results for each year and group
+dfResults<-data.frame(matrix(nrow=6, ncol = 7))
+colnames(dfResults)<-c("tertile","year","PPV","NPV","P_event","N_event","prevalence [%]")
+
+
+#Extract time to events columns from rawdata
+outcomes<-names(rawdata)[grep("outcome",names(rawdata))]
+#cbind q1, q2, and q3
+Qdata<-cbind(T1pats,T2pats,T3pats)
+Q<-c("T1pats","T2pats","T3pats")
+
+#Loop over tertile
+for (j in 1:3){
+  #Loop over year
+  for (i in 1:6){
+    data<-cbind(rawdata[outcomes[i]],rawdata[CP])
+    TerPats<-Qdata[,Q[j]]
+    idx<-which(TerPats & micropats)
+    COVdata<-na.omit(data[idx,])
+    event<-sum(data[outcomes[i]][idx,],na.rm = TRUE)
+    event_no<-sum(!data[outcomes[i]][idx,],na.rm = TRUE)
+    if(event!=0){
+    #Define formula and training the glm model
+    mod_formula <- as.formula(paste(outcomes[i],paste(CP,collapse = "+"),sep="~"))
+    mod <- glm(formula = mod_formula, family = binomial, data = COVdata)
+  
+  
+    ###################Make confusion matrix from glm model############
+    #use model to predict probability of default
+    pred<- predict(mod, data = COVdata, type="response")
+    #convert defaults from "Yes" and "No" to 1's and 0's
+    ActualLabel <- ifelse(COVdata[outcomes[i]]=="TRUE", 1, 0)
+    optimal <- optimalCutoff(ActualLabel, pred)[1]
+    #create confusion matrix
+    r=confusionMatrix(ActualLabel, pred,threshold = optimal)
+  
+    #True posive value and Negative Predictive value value
+    TN=r[1,1]
+    FN=r[1,2]
+    FP=r[2,1]
+    TP=r[2,2]
+    
+    PPV1=TP/(TP+FP)
+    NPV1=TN/(TN+FN)
+    ################Book keeping column#################
+    #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<-i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-round(PPV1,2)
+    dfResults[i,"NPV"]<-round(NPV1,2)
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no  
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }else{
+     #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<- i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-0
+    dfResults[i,"NPV"]<-0
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no 
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }
+
+  }
+  print(dfResults)
+}
+```
+
+
+## Clinical parameter and Adenine (CP+AD): Positive Predictive value and Negative Predictive value for each year (1 to 6)
+```{r Micro_PPVwithTERTILE}
+#define conditions like clinical parameters (CP) 
+CP<-c("predictor","age","hemoglobin","map","bmi","egfr","logacr")
+
+#make a dataframe to hold results for each year and group
+dfResults<-data.frame(matrix(nrow=6, ncol = 7))
+colnames(dfResults)<-c("tertile","year","PPV","NPV","P_event","N_event","prevalence [%]")
+
+
+#Extract time to events columns from rawdata
+outcomes<-names(rawdata)[grep("outcome",names(rawdata))]
+#cbind q1, q2, and q3
+Qdata<-cbind(T1pats,T2pats,T3pats)
+Q<-c("T1pats","T2pats","T3pats")
+
+#Loop over tertile
+for (j in 1:3){
+  #Loop over year
+  for (i in 1:6){
+    data<-cbind(rawdata[outcomes[i]],rawdata[CP])
+    TerPats<-Qdata[,Q[j]]
+    idx<-which(TerPats & micropats)
+    COVdata<-na.omit(data[idx,])
+    event<-sum(data[outcomes[i]][idx,],na.rm = TRUE)
+    event_no<-sum(!data[outcomes[i]][idx,],na.rm = TRUE)
+    if(event!=0){
+    #Define formula and training the glm model
+    mod_formula <- as.formula(paste(outcomes[i],paste(CP,collapse = "+"),sep="~"))
+    mod <- glm(formula = mod_formula, family = binomial, data = COVdata)
+  
+  
+    ###################Make confusion matrix from glm model############
+    #use model to predict probability of default
+    pred<- predict(mod, data = COVdata, type="response")
+    #convert defaults from "Yes" and "No" to 1's and 0's
+    ActualLabel <- ifelse(COVdata[outcomes[i]]=="TRUE", 1, 0)
+    optimal <- optimalCutoff(ActualLabel, pred)[1]
+    #create confusion matrix
+    r=confusionMatrix(ActualLabel, pred,threshold = optimal)
+  
+    #True posive value and Negative Predictive value value
+    TN=r[1,1]
+    FN=r[1,2]
+    FP=r[2,1]
+    TP=r[2,2]
+    
+    PPV1=TP/(TP+FP)
+    NPV1=TN/(TN+FN)
+  
+    ################Book keeping column#################
+    #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<-i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-round(PPV1,2)
+    dfResults[i,"NPV"]<-round(NPV1,2)
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no   
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }else{
+     #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<- i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-0
+    dfResults[i,"NPV"]<-0
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no  
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }
+
+  }
+  print(dfResults)
+}
+```
+
+
+## Micro group: likelihood ratio test for nested models (CP vs CP+Adenine). lrtest is a generic function for carrying out likelihood ratio tests. The default method can be employed for comparing nested (generalized) linear models. Link: https://www.rdocumentation.org/packages/lmtest/versions/0.9-39/topics/lrtest
+```{r ttestmicro}
+#define conditions like clinical parameters (CP) 
+CP<-c("age","hemoglobin","map","bmi","egfr","logacr")
+#define conditions like clinical parameters (CP) 
+CPAD<-c("predictor","age","hemoglobin","map","bmi","egfr","logacr")
+
+#make a dataframe to hold results for each year and group
+dfResults<-data.frame(matrix(nrow=6, ncol = 5))
+colnames(dfResults)<-c("tertile","year","prevalence [%]","LRT-p","gain")
+
+#Extract time to events columns from rawdata
+outcomes<-names(rawdata)[grep("outcome",names(rawdata))]
+#cbind q1, q2, and q3
+Qdata<-cbind(T1pats,T2pats,T3pats)
+Q<-c("T1pats","T2pats","T3pats")
+#Loop over tertile
+for (j in 1:3){
+  #Loop over year
+  for (i in 1:6){
+    #CPdata for CP model
+    CPdata<-cbind(rawdata[outcomes[i]],rawdata[CP])
+    #ADdata for CP+Ad model
+    ADdata<-cbind(rawdata[outcomes[i]],rawdata[CPAD])
+    #patients with tertiles
+    TerPats<-Qdata[,Q[j]]
+    #index with tertiles and normal Albuminiria 
+    idx<-which(TerPats & micropats)
+    #COVdata for CP and ADCOVdata for CP+Ad
+    COVdata<-na.omit(CPdata[idx,])
+    ADCOVdata<-na.omit(ADdata[idx,])
+    
+    #Count the positive events
+    event<-sum(CPdata[outcomes[i]][idx,],na.rm = TRUE)
+    event_no<-sum(!CPdata[outcomes[i]][idx,],na.rm = TRUE)
+    if(event!=0){
+      #Define formula for CP and CP+Ad and training the glm model
+      mod_formula <- as.formula(paste(outcomes[i],paste(CP,collapse = "+"),sep="~"))
+      A_mod_formula <- as.formula(paste(outcomes[i],paste(CPAD,collapse = "+"),sep="~"))
+    
+      mod <- glm(formula = mod_formula, family = binomial, data = COVdata)
+      A_mod <- glm(formula = A_mod_formula, family = binomial, data = ADCOVdata)
+   
+      #perform likelihood ratio test for differences in models
+      modeltest<-lrtest(A_mod, mod)
+       #Gain estimation
+      A1<-lroc(mod,graph = FALSE)
+      A2<-lroc(A_mod, graph = FALSE)
+      gain<-A2$auc-A1$auc    
+    ################Book keeping column#################
+      #Save each tertile
+      dfResults[i,"tertile"]<-j
+      #Save each year outcome
+      dfResults[i,"year"]<-i
+      dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+      
+      #Save gain
+      dfResults[i,"gain"]<-gain
+      #Save each model p-value
+      
+      pval<-modeltest$p.value
+      pval_arr <- c(pval_arr, pval)
+      testname<-c(testname,paste(c("micro",i,j), collapse="-"))
+      
+      pval_micro<-c(pval_micro, pval)
+      testname_micro<-c(testname_micro,paste(c("micro",i,j), collapse="-"))
+      
+      dfResults[i,"LRT-p"]<-modeltest$p.value
+    }else{
+      #Save each tertile
+      dfResults[i,"tertile"]<-j
+      #Save each year outcome
+      dfResults[i,"year"]<- i
+      dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+      #Save PPV and NPV value
+      dfResults[i,"LRT-p"]<-"No"
+    }
+  }
+  print(dfResults)
+}
+```
+
+
+## multilpe comparision for micro gourp
+```{r}
+Admat_micro<-c("pval_micro","addPval_micro","models_micro")
+adjPvalue_micro<-p.adjust(pval_micro, method = "BH")
+Admat_micro<-c("pval_micro","addPval_micro","models_micro")
+Adv_micro<-cbind(pval_micro,adjPvalue_micro,testname_micro)
+print(Adv_micro)
+```
+
+
+# Normal+Micro group
+
+## Clinical parameter (CP): Positive Predictive value and Negative Predictive value for each year (1 to 6)
+```{r Normal_Micro_CP}
+#define conditions like clinical parameters (CP) 
+CP<-c("age","hemoglobin","map","bmi","egfr","logacr")
+
+#make a dataframe to hold results for each year and group
+dfResults<-data.frame(matrix(nrow=6, ncol = 7))
+colnames(dfResults)<-c("tertile","year","PPV","NPV","P_event","N_event","prevalence [%]")
+
+
+#Extract time to events columns from rawdata
+outcomes<-names(rawdata)[grep("outcome",names(rawdata))]
+#cbind q1, q2, and q3
+Qdata<-cbind(T1pats,T2pats,T3pats)
+Q<-c("T1pats","T2pats","T3pats")
+
+#Loop over tertile
+for (j in 1:3){
+  #Loop over year
+  for (i in 1:6){
+    data<-cbind(rawdata[outcomes[i]],rawdata[CP])
+    TerPats<-Qdata[,Q[j]]
+    idx<-which(TerPats & normopats | TerPats & micropats)
+    COVdata<-na.omit(data[idx,])
+    event<-sum(data[outcomes[i]][idx,],na.rm = TRUE)
+    event_no<-sum(!data[outcomes[i]][idx,],na.rm = TRUE)
+    if(event!=0){
+    #Define formula and training the glm model
+    mod_formula <- as.formula(paste(outcomes[i],paste(CP,collapse = "+"),sep="~"))
+    mod <- glm(formula = mod_formula, family = binomial, data = COVdata)
+  
+  
+    ###################Make confusion matrix from glm model############
+    #use model to predict probability of default
+    pred<- predict(mod, data = COVdata, type="response")
+    #convert defaults from "Yes" and "No" to 1's and 0's
+    ActualLabel <- ifelse(COVdata[outcomes[i]]=="TRUE", 1, 0)
+    optimal <- optimalCutoff(ActualLabel, pred)[1]
+    #create confusion matrix
+    r=confusionMatrix(ActualLabel, pred,threshold = optimal)
+  
+    #True posive value and Negative Predictive value value
+    TN=r[1,1]
+    FN=r[1,2]
+    FP=r[2,1]
+    TP=r[2,2]
+    
+    PPV1=TP/(TP+FP)
+    NPV1=TN/(TN+FN)
+  
+    ################Book keeping column#################
+    #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<-i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-round(PPV1,2)
+    dfResults[i,"NPV"]<-round(NPV1,2)
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no 
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }else{
+     #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<- i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-0
+    dfResults[i,"NPV"]<-0
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no   
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }
+
+  }
+  print(dfResults)
+}
+```
+
+
+## Clinical parameter and Adenine (CP+AD): Positive Predictive value and Negative Predictive value for each year (1 to 6)
+```{r Normal_Micro_PPVwithTERTILE}
+#define conditions like clinical parameters (CP) 
+CP<-c("predictor","age","hemoglobin","map","bmi","egfr","logacr")
+
+#make a dataframe to hold results for each year and group
+dfResults<-data.frame(matrix(nrow=6, ncol = 7))
+colnames(dfResults)<-c("tertile","year","PPV","NPV","P_event","N_event","prevalence [%]")
+
+
+#Extract time to events columns from rawdata
+outcomes<-names(rawdata)[grep("outcome",names(rawdata))]
+#cbind q1, q2, and q3
+Qdata<-cbind(T1pats,T2pats,T3pats)
+Q<-c("T1pats","T2pats","T3pats")
+
+#Loop over tertile
+for (j in 1:3){
+  #Loop over year
+  for (i in 1:6){
+    data<-cbind(rawdata[outcomes[i]],rawdata[CP])
+    TerPats<-Qdata[,Q[j]]
+    idx<-which(TerPats & normopats | TerPats & micropats)
+    COVdata<-na.omit(data[idx,])
+    event<-sum(data[outcomes[i]][idx,],na.rm = TRUE)
+    event_no<-sum(!data[outcomes[i]][idx,],na.rm = TRUE)
+    if(event!=0){
+    #Define formula and training the glm model
+    mod_formula <- as.formula(paste(outcomes[i],paste(CP,collapse = "+"),sep="~"))
+    mod <- glm(formula = mod_formula, family = binomial, data = COVdata)
+  
+  
+    ###################Make confusion matrix from glm model############
+    #use model to predict probability of default
+    pred<- predict(mod, data = COVdata, type="response")
+    #convert defaults from "Yes" and "No" to 1's and 0's
+    ActualLabel <- ifelse(COVdata[outcomes[i]]=="TRUE", 1, 0)
+    optimal <- optimalCutoff(ActualLabel, pred)[1]
+    #create confusion matrix
+    r=confusionMatrix(ActualLabel, pred,threshold = optimal)
+  
+    #True posive value and Negative Predictive value value
+    TN=r[1,1]
+    FN=r[1,2]
+    FP=r[2,1]
+    TP=r[2,2]
+    
+    PPV1=TP/(TP+FP)
+    NPV1=TN/(TN+FN)
+  
+    ################Book keeping column#################
+    #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<-i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-round(PPV1,2)
+    dfResults[i,"NPV"]<-round(NPV1,2)
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no  
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }else{
+     #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<- i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-0
+    dfResults[i,"NPV"]<-0
+     dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no   
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }
+
+  }
+  print(dfResults)
+}
+```
+
+
+## Normal+Micro group: likelihood ratio test for nested models (CP vs CP+Adenine). lrtest is a generic function for carrying out likelihood ratio tests. The default method can be employed for comparing nested (generalized) linear models. Link: https://www.rdocumentation.org/packages/lmtest/versions/0.9-39/topics/lrtest
+```{r ttestNormalmicro}
+#define conditions like clinical parameters (CP) 
+CP<-c("age","hemoglobin","map","bmi","egfr","logacr")
+#define conditions like clinical parameters (CP) 
+CPAD<-c("predictor","age","hemoglobin","map","bmi","egfr","logacr")
+
+#make a dataframe to hold results for each year and group
+dfResults<-data.frame(matrix(nrow=6, ncol = 5))
+colnames(dfResults)<-c("tertile","year","prevalence [%]","LRT-p","gain")
+
+#Extract time to events columns from rawdata
+outcomes<-names(rawdata)[grep("outcome",names(rawdata))]
+#cbind q1, q2, and q3
+Qdata<-cbind(T1pats,T2pats,T3pats)
+Q<-c("T1pats","T2pats","T3pats")
+#Loop over tertile
+for (j in 1:3){
+  #Loop over year
+  for (i in 1:6){
+    #CPdata for CP model
+    CPdata<-cbind(rawdata[outcomes[i]],rawdata[CP])
+    #ADdata for CP+Ad model
+    ADdata<-cbind(rawdata[outcomes[i]],rawdata[CPAD])
+    #patients with tertiles
+    TerPats<-Qdata[,Q[j]]
+    #index with tertiles and normal Albuminiria 
+    idx<-which(TerPats & normopats | TerPats & micropats)
+    #COVdata for CP and ADCOVdata for CP+Ad
+    COVdata<-na.omit(CPdata[idx,])
+    ADCOVdata<-na.omit(ADdata[idx,])
+    
+    #Count the positive events
+    event<-sum(CPdata[outcomes[i]][idx,],na.rm = TRUE)
+    event_no<-sum(!CPdata[outcomes[i]][idx,],na.rm = TRUE)
+    if(event!=0){
+      #Define formula for CP and CP+Ad and training the glm model
+      mod_formula <- as.formula(paste(outcomes[i],paste(CP,collapse = "+"),sep="~"))
+      A_mod_formula <- as.formula(paste(outcomes[i],paste(CPAD,collapse = "+"),sep="~"))
+    
+      mod <- glm(formula = mod_formula, family = binomial, data = COVdata)
+      A_mod <- glm(formula = A_mod_formula, family = binomial, data = ADCOVdata)
+      
+      #Gain estimation
+      A1<-lroc(mod,graph = FALSE)
+      A2<-lroc(A_mod, graph = FALSE)
+      gain<-A2$auc-A1$auc
+   
+      #perform likelihood ratio test for differences in models
+      modeltest<-lrtest(A_mod, mod)
+     
+    ################Book keeping column#################
+      #Save each tertile
+      dfResults[i,"tertile"]<-j
+      #Save each year outcome
+      dfResults[i,"year"]<-i
+      dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+      
+      #Save gain
+      dfResults[i,"gain"]<-gain
+      
+      #Save each model p-value
+      #pval_arr <- c(pval_arr, modeltest[2,5])
+       pval<-modeltest$p.value
+      pval_arr <- c(pval_arr, pval)
+      testname<-c(testname,paste(c("Norm",i,j), collapse="-"))
+
+      pval_nm<-c(pval_nm, pval)
+      testname_nm<-c(testname_nm,paste(c("nm",i,j), collapse="-"))      
+      
+      dfResults[i,"LRT-p"]<-modeltest$p.value
+      
+    }else{
+      #Save each tertile
+      dfResults[i,"tertile"]<-j
+      #Save each year outcome
+      dfResults[i,"year"]<- i
+      dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+      #Save PPV and NPV value
+      dfResults[i,"LRT-p"]<-"No"
+    }
+  }
+  print(dfResults)
+}
+```
+
+## multilpe comparision for Normal+micro gourp
+```{r}
+Admat_nm<-c("pval_nm","addPval_nm","models_nm")
+adjPvalue_nm<-p.adjust(pval_nm, method = "BH")
+Admat_nm<-c("pval_nm","addPval_nm","models_nm")
+Adv_nm<-cbind(pval_nm,adjPvalue_nm,testname_nm)
+print(Adv_nm)
+```
+
+# Adjust P-values for Multiple Comparisons: Benjamini Hochberg analysis is performed to show significance among multiple models. Aadjasted p-values was estimated from p-value measured from CP vs CP+AD. The test shows that Norm-6-2 (tertile 2 and year 6 for normal gourp with adenine) has significant difference. link: https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/p.adjust
+
+```{r}
+adjPvalue<-p.adjust(pval_arr, method = "BH")
+Admat<-c("pval","addPval","models")
+Adv<-cbind(pval_arr,adjPvalue,testname)
+print(Adv)
+```
+
+# Conclusion: 1) Including adenine with clinical parameters improved the gain; 2) likelihood ratio test between nested models shows that adenine with clinical parameters significantly improve performance at the normal group at tertile 2. 3) Muliple comparisons also shows Norm-6-2 (tertile 2 and year 6 for normal gourp with adenine) has significant difference
+
+

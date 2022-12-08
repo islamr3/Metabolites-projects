@@ -1,0 +1,135 @@
+---
+title: "Count ESKD events in CRIC patients with normoalbuminuria grouped by baseline Adenine tertiles"
+author: "Daniel Montemayor and Rabiul Islam<br><small>Center for Renal Precision Medicine<br>University of Texas Health San Antonio School of Medicine</small>"
+date: "<small>`r Sys.Date()`</small>"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    number_sections: true
+    toc_float: 
+      collapsed: false
+    code_folding: hide
+    theme: cerulean
+---
+
+![Center for Renal Precision Medicine](https://dmontemayor.github.io/assets/Long_SOM/horizontal/JPG/UTHSA_Long-SOM_H_CMYK.jpg)
+
+# Brief
+Hi Dan and Rabi,
+ 
+Could you provide me with total numbers in each tertile at beginning of study in the Normoalbuminuria group and the exact numbers of patients who developed ESKD from each tertile in a cumulative manner for each year they were enrolled in CRIC from Y1-Y9. Please provide in an xls sheet. I will need the data today by 1pm.
+Thanks,
+Kumar
+
+```{r requirements, message=FALSE, warning=FALSE}
+#Requirements
+requirements <- c("dplyr")
+
+#CRAN repository
+repos <- "http://cran.us.r-project.org"
+
+#install and load missing requirements
+for (pack in requirements){
+  if( !is.element(pack, .packages(all.available = TRUE)) ) {
+    #install.packages(pack, repos = repos)
+    install.packages(pack)
+  }
+  library(pack, character.only = TRUE)
+}
+```
+
+```{r constants}
+#Constants
+MWade = 135.13 # molecular weights for adenine in g/mol
+MWcre = 113.12 #molecular weights for creatinine in g/mol
+
+#Random number seed
+rm(list=ls())
+set.seed(10079)
+
+```
+
+```{r download}
+#get data
+rawdata <- read.csv("RedCapUp2.csv")#, stringsAsFactors = TRUE)
+#aadata <- read.csv("CRIC_AA_Combined_final_adding_pipecolate_Creatinine_Normalized.csv")
+```
+
+# Display Adenine cutoff values between tertiles
+```{r}
+#get ACR in units of mg/mmol
+rawdata$acr<-(rawdata$urine_albumin_v3y0/rawdata$urine_creatinine_v3y0)*1000/88.42
+
+#select normogroup
+rawdata <- rawdata[which(rawdata$acr <3), ]
+
+#get adenine tertiles cutoff values
+quants <- quantile(rawdata$Adenine..nM.uM., c(1/3,2/3), na.rm = TRUE)
+print(paste("tertile cutoffs in (nm/um)= ", paste(quants, collapse=", ")))
+```
+
+# Display number of patients per tertile 
+```{r}
+#get Tertile patients
+T1pats <- which(rawdata$Adenine..nM.uM.<= quants[1])
+T2pats <- which(rawdata$Adenine..nM.uM.> quants[1] & rawdata$Adenine..nM.uM.<= quants[2])
+T3pats <- which(rawdata$Adenine..nM.uM.> quants[2])
+
+#diagnostic check number of patients in each tertile
+print(paste("number of patients in T1", length(T1pats)))
+print(paste("number of patients in T2", length(T2pats)))
+print(paste("number of patients in T3", length(T3pats)))
+
+```
+
+
+# Display number of events since last visit by tertile.
+## For Composite Event defined as dialysis, or  transplant, or 50% decline eGFR(CRIC EQ)
+```{r}
+#print(paste("year", "T1events", "T2events", "T3events"))
+
+#make a dataframe to hold event count
+df <- data.frame(matrix(nrow=10, ncol = 4))
+colnames(df) <- c("year", "T1", "T2", "T3")
+
+#loop over years and count events using the time-to-esrd
+for (year in 1:10){
+  #print(year)
+  T1events <- which(rawdata$sa_allc_cric_time_renal1_v3y0[T1pats] >(year-1) &rawdata$sa_allc_cric_time_renal1_v3y0[T1pats] <=(year))
+  T2events <- which(rawdata$sa_allc_cric_time_renal1_v3y0[T2pats] >(year-1) &rawdata$sa_allc_cric_time_renal1_v3y0[T2pats] <=(year))
+  T3events <- which(rawdata$sa_allc_cric_time_renal1_v3y0[T3pats] >(year-1) &rawdata$sa_allc_cric_time_renal1_v3y0[T3pats] <=(year))
+
+  #print(paste(year, length(T1events), length(T2events), length(T3events)))
+  df$year[year] <- year
+  df$T1[year] <- length(T1events)
+  df$T2[year] <- length(T2events)
+  df$T3[year] <- length(T3events)
+} 
+
+print(df)
+```
+## For Composite Event defined as dialysis, or  transplant, or 50% decline eGFR(CRIC EQ), or eGFR<=15
+```{r}
+#print(paste("year", "T1events", "T2events", "T3events"))
+
+#make a dataframe to hold event count
+df <- data.frame(matrix(nrow=10, ncol = 4))
+colnames(df) <- c("year", "T1", "T2", "T3")
+
+#loop over years and count events using the time-to-esrd
+for (year in 1:10){
+  #print(year)
+  T1events <- which(rawdata$sa_allc_cric_time_renal3_v3y0[T1pats] >(year-1) &rawdata$sa_allc_cric_time_renal3_v3y0[T1pats] <=(year))
+  T2events <- which(rawdata$sa_allc_cric_time_renal3_v3y0[T2pats] >(year-1) &rawdata$sa_allc_cric_time_renal3_v3y0[T2pats] <=(year))
+  T3events <- which(rawdata$sa_allc_cric_time_renal3_v3y0[T3pats] >(year-1) &rawdata$sa_allc_cric_time_renal3_v3y0[T3pats] <=(year))
+
+  #print(paste(year, length(T1events), length(T2events), length(T3events)))
+  df$year[year] <- year
+  df$T1[year] <- length(T1events)
+  df$T2[year] <- length(T2events)
+  df$T3[year] <- length(T3events)
+} 
+
+print(df)
+```

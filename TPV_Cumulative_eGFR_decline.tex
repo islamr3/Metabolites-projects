@@ -1,0 +1,978 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\title{PPV and NPV with the eGFR 40\% decline at end of 6y for each NA
+and MA group and also combined}
+\author{Daniel Montemayor and Rabiul IslamCenter for Renal Precision
+MedicineUniversity of Texas Health San Antonio School of Medicine}
+\date{2022-02-08}
+
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={PPV and NPV with the eGFR 40\% decline at end of 6y for each NA and MA group and also combined},
+  pdfauthor={Daniel Montemayor and Rabiul Islam Center for Renal Precision Medicine University of Texas Health San Antonio School of Medicine},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{3}
+\tableofcontents
+}
+\begin{figure}
+\centering
+\includegraphics{https://dmontemayor.github.io/assets/Long_SOM/horizontal/JPG/UTHSA_Long-SOM_H_CMYK.jpg}
+\caption{Center for Renal Precision Medicine}
+\end{figure}
+
+\hypertarget{brief}{%
+\section{Brief}\label{brief}}
+
++TPV and NPV with eGFR decline of 40\% in each of the bins for the
+normo, micro, and normal+Micro goup + pertition by Adenine Tertiles for
+NA, MA, and NA+MA groups. +estimate TPV and NPV wrt years for each
+teritle +Positive event and negative events were estimate by removing
+the NAN value with patients +prevalence rate (\%)=(positive
+events/positive events+negative events)100{]}: link:
+\url{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4022000/}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{knitr}\SpecialCharTok{::}\NormalTok{opts\_chunk}\SpecialCharTok{$}\FunctionTok{set}\NormalTok{(}\AttributeTok{message =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{warning=}\ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#Requirements}
+\NormalTok{requirements }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"dplyr"}\NormalTok{,}\StringTok{"reshape"}\NormalTok{,}\StringTok{"ggplot2"}\NormalTok{,}\StringTok{"caret"}\NormalTok{,}\StringTok{"regclass"}\NormalTok{,}\StringTok{"InformationValue"}\NormalTok{,}\StringTok{"ISLR"}\NormalTok{)}
+
+\CommentTok{\#CRAN repository}
+\NormalTok{repos }\OtherTok{\textless{}{-}} \StringTok{"http://cran.us.r{-}project.org"}
+
+\CommentTok{\#install and load missing requirements}
+\ControlFlowTok{for}\NormalTok{ (pack }\ControlFlowTok{in}\NormalTok{ requirements)\{}
+  \ControlFlowTok{if}\NormalTok{( }\SpecialCharTok{!}\FunctionTok{is.element}\NormalTok{(pack, }\FunctionTok{.packages}\NormalTok{(}\AttributeTok{all.available =} \ConstantTok{TRUE}\NormalTok{)) ) \{}
+    \CommentTok{\#install.packages(pack, repos = repos)}
+    \FunctionTok{install.packages}\NormalTok{(pack)}
+\NormalTok{  \}}
+  \FunctionTok{library}\NormalTok{(pack, }\AttributeTok{character.only =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{rm}\NormalTok{(}\AttributeTok{list=}\FunctionTok{ls}\NormalTok{())}
+\CommentTok{\#Constants}
+\NormalTok{MWade }\OtherTok{=} \FloatTok{135.13} \CommentTok{\# molecular weights for adenine in g/mol}
+\NormalTok{MWcre }\OtherTok{=} \FloatTok{113.12} \CommentTok{\#molecular weights for creatinine in g/mol}
+
+\CommentTok{\#Random number seed}
+\FunctionTok{set.seed}\NormalTok{(}\DecValTok{10079}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#get data}
+\NormalTok{rawdata }\OtherTok{\textless{}{-}} \FunctionTok{read.csv}\NormalTok{(}\StringTok{"RedCapUp2.csv"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#remove patients with no adenine values}
+\NormalTok{rawdata }\OtherTok{\textless{}{-}}\NormalTok{ rawdata[}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(rawdata}\SpecialCharTok{$}\NormalTok{Adenine..nM.uM.), ]}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{display-adenine-cutoff-values-between-tertiles}{%
+\section{Display Adenine cutoff values between
+tertiles}\label{display-adenine-cutoff-values-between-tertiles}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#get ACR in units of mg/mmol}
+\NormalTok{rawdata}\SpecialCharTok{$}\NormalTok{acr}\OtherTok{\textless{}{-}}\NormalTok{(rawdata}\SpecialCharTok{$}\NormalTok{urine\_albumin\_v3y0}\SpecialCharTok{/}\NormalTok{rawdata}\SpecialCharTok{$}\NormalTok{urine\_creatinine\_v3y0)}\SpecialCharTok{*}\DecValTok{1000}\SpecialCharTok{/}\FloatTok{88.42}
+
+\CommentTok{\#select normogroup}
+\NormalTok{normopats }\OtherTok{\textless{}{-}}\NormalTok{ rawdata}\SpecialCharTok{$}\NormalTok{acr }\SpecialCharTok{\textless{}}\DecValTok{3}
+\NormalTok{micropats }\OtherTok{\textless{}{-}}\NormalTok{ rawdata}\SpecialCharTok{$}\NormalTok{acr }\SpecialCharTok{\textgreater{}=}\DecValTok{3} \SpecialCharTok{\&}\NormalTok{ rawdata}\SpecialCharTok{$}\NormalTok{acr }\SpecialCharTok{\textless{}}\DecValTok{30}
+\FunctionTok{print}\NormalTok{(}\FunctionTok{paste}\NormalTok{(}\StringTok{"number of patients with normo{-}albuminuria = "}\NormalTok{, }\FunctionTok{sum}\NormalTok{(normopats, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "number of patients with normo-albuminuria =  293"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(}\FunctionTok{paste}\NormalTok{(}\StringTok{"number of patients with micro{-}albuminuria = "}\NormalTok{, }\FunctionTok{sum}\NormalTok{(micropats, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "number of patients with micro-albuminuria =  260"
+\end{verbatim}
+
+\hypertarget{get-adenine-tertiles-cutoff-values}{%
+\section{get adenine tertiles cutoff
+values}\label{get-adenine-tertiles-cutoff-values}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{quants }\OtherTok{\textless{}{-}} \FunctionTok{quantile}\NormalTok{(rawdata}\SpecialCharTok{$}\NormalTok{Adenine..nM.uM., }\FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{1}\SpecialCharTok{/}\DecValTok{3}\NormalTok{,}\DecValTok{2}\SpecialCharTok{/}\DecValTok{3}\NormalTok{,}\DecValTok{1}\NormalTok{), }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\FunctionTok{print}\NormalTok{(}\FunctionTok{paste}\NormalTok{(}\StringTok{"tertile cutoffs in (nm/um)= "}\NormalTok{, }\FunctionTok{paste}\NormalTok{(quants, }\AttributeTok{collapse=}\StringTok{", "}\NormalTok{)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "tertile cutoffs in (nm/um)=  0, 0.004724269, 0.024688888, 3.992470467"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(}\FunctionTok{paste}\NormalTok{(}\StringTok{"tertile cutoffs in (mg/g)= "}\NormalTok{, }\FunctionTok{paste}\NormalTok{(quants}\SpecialCharTok{*}\NormalTok{MWcre}\SpecialCharTok{/}\NormalTok{MWade, }\AttributeTok{collapse=}\StringTok{", "}\NormalTok{)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "tertile cutoffs in (mg/g)=  0, 0.00395477917028047, 0.0206675572453193, 3.34217612097269"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{T1pats }\OtherTok{\textless{}{-}}\NormalTok{ rawdata}\SpecialCharTok{$}\NormalTok{Adenine..nM.uM. }\SpecialCharTok{\textgreater{}=}\NormalTok{ quants[}\DecValTok{1}\NormalTok{] }\SpecialCharTok{\&}\NormalTok{ rawdata}\SpecialCharTok{$}\NormalTok{Adenine..nM.uM. }\SpecialCharTok{\textless{}}\NormalTok{ quants[}\DecValTok{2}\NormalTok{]}
+\NormalTok{T2pats }\OtherTok{\textless{}{-}}\NormalTok{ rawdata}\SpecialCharTok{$}\NormalTok{Adenine..nM.uM. }\SpecialCharTok{\textgreater{}=}\NormalTok{ quants[}\DecValTok{2}\NormalTok{] }\SpecialCharTok{\&}\NormalTok{ rawdata}\SpecialCharTok{$}\NormalTok{Adenine..nM.uM. }\SpecialCharTok{\textless{}}\NormalTok{ quants[}\DecValTok{3}\NormalTok{]}
+\NormalTok{T3pats }\OtherTok{\textless{}{-}}\NormalTok{ rawdata}\SpecialCharTok{$}\NormalTok{Adenine..nM.uM. }\SpecialCharTok{\textgreater{}=}\NormalTok{ quants[}\DecValTok{3}\NormalTok{]}
+\FunctionTok{print}\NormalTok{(}\FunctionTok{paste}\NormalTok{(}\StringTok{"Total number of patients "}\NormalTok{, }\FunctionTok{sum}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(rawdata}\SpecialCharTok{$}\NormalTok{Adenine..nM.uM.))))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Total number of patients  952"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(}\FunctionTok{paste}\NormalTok{(}\StringTok{"number of patients in T1 "}\NormalTok{, }\FunctionTok{sum}\NormalTok{(T1pats, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "number of patients in T1  317"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(}\FunctionTok{paste}\NormalTok{(}\StringTok{"number of patients in T2 "}\NormalTok{, }\FunctionTok{sum}\NormalTok{(T2pats, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "number of patients in T2  317"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{print}\NormalTok{(}\FunctionTok{paste}\NormalTok{(}\StringTok{"number of patients in T3 "}\NormalTok{, }\FunctionTok{sum}\NormalTok{(T3pats, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "number of patients in T3  318"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#select eGFR}
+\NormalTok{egfrcols }\OtherTok{\textless{}{-}} \FunctionTok{names}\NormalTok{(rawdata)[}\FunctionTok{grep}\NormalTok{(}\StringTok{"egfr\_cric\_v"}\NormalTok{, }\FunctionTok{names}\NormalTok{(rawdata))]}
+\CommentTok{\#loop over years and count events for each year}
+\ControlFlowTok{for}\NormalTok{ (year }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{7}\NormalTok{)\{}
+  \CommentTok{\#print(year)}
+  \CommentTok{\#calculate 40\% decline at each year}
+\NormalTok{  t1 }\OtherTok{\textless{}{-}}\NormalTok{ rawdata[, egfrcols[year}\SpecialCharTok{+}\DecValTok{1}\NormalTok{]]  }\CommentTok{\#EGFR[,year]}
+\NormalTok{  t0 }\OtherTok{\textless{}{-}}\NormalTok{ rawdata[, egfrcols[}\DecValTok{1}\NormalTok{]] }\CommentTok{\#rawdata$egfr\_cric\_v3y0}
+\NormalTok{  rawdata[}\FunctionTok{paste}\NormalTok{(}\StringTok{"outcome40"}\NormalTok{,year, }\AttributeTok{sep =} \StringTok{"\_"}\NormalTok{)] }\OtherTok{=}\NormalTok{ ((t1}\SpecialCharTok{{-}}\NormalTok{t0)}\SpecialCharTok{/}\NormalTok{t0 }\SpecialCharTok{\textless{}} \SpecialCharTok{{-}}\NormalTok{.}\DecValTok{40}\NormalTok{)   }\CommentTok{\#| (t2==1)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{adenine-and-clinical-variable-preprocessing-to-apply-glm}{%
+\section{Adenine and clinical Variable preprocessing to apply
+glm}\label{adenine-and-clinical-variable-preprocessing-to-apply-glm}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{impute}\OtherTok{\textless{}{-}}\ControlFlowTok{function}\NormalTok{(x)\{}
+  \FunctionTok{replace}\NormalTok{(x, x}\SpecialCharTok{==}\DecValTok{0}\NormalTok{, }\FunctionTok{min}\NormalTok{(x[x}\SpecialCharTok{\textgreater{}}\DecValTok{0}\NormalTok{], }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}\SpecialCharTok{/}\DecValTok{2}\NormalTok{)}
+\NormalTok{\}}
+\CommentTok{\#predictor is log2 adenine}
+\NormalTok{rawdata}\SpecialCharTok{$}\NormalTok{predictor}\OtherTok{\textless{}{-}} \FunctionTok{log2}\NormalTok{(}\FunctionTok{impute}\NormalTok{(rawdata}\SpecialCharTok{$}\NormalTok{Adenine..nM.uM.))}
+
+\CommentTok{\#Clinical varible normalization based on z{-}score}
+\NormalTok{rawdata}\SpecialCharTok{$}\NormalTok{age}\OtherTok{\textless{}{-}}\FunctionTok{scale}\NormalTok{(rawdata}\SpecialCharTok{$}\NormalTok{age\_integer\_v3y0)}
+\NormalTok{rawdata}\SpecialCharTok{$}\NormalTok{hemoglobin}\OtherTok{\textless{}{-}}\FunctionTok{scale}\NormalTok{(rawdata}\SpecialCharTok{$}\NormalTok{hemoglobin\_a1c\_v3y0)}
+\NormalTok{rawdata}\SpecialCharTok{$}\NormalTok{map}\OtherTok{\textless{}{-}}\FunctionTok{scale}\NormalTok{(rawdata}\SpecialCharTok{$}\NormalTok{map\_v3y0)}
+\NormalTok{rawdata}\SpecialCharTok{$}\NormalTok{bmi}\OtherTok{\textless{}{-}}\FunctionTok{scale}\NormalTok{(rawdata}\SpecialCharTok{$}\NormalTok{bmi\_v3y0)}
+\NormalTok{rawdata}\SpecialCharTok{$}\NormalTok{egfr}\OtherTok{\textless{}{-}}\FunctionTok{scale}\NormalTok{(rawdata}\SpecialCharTok{$}\NormalTok{egfr\_ckd\_epi\_v3y0)}
+\NormalTok{rawdata}\SpecialCharTok{$}\NormalTok{logacr}\OtherTok{\textless{}{-}}\FunctionTok{scale}\NormalTok{(}\FunctionTok{log2}\NormalTok{(rawdata}\SpecialCharTok{$}\NormalTok{acr))}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{normal-group}{%
+\section{Normal Group}\label{normal-group}}
+
+\hypertarget{clinical-parameter-cp-true-positive-and-false-positive-for-each-year-1-to-6}{%
+\subsection{Clinical parameter (CP): True positive and False positive
+for each year (1 to
+6)}\label{clinical-parameter-cp-true-positive-and-false-positive-for-each-year-1-to-6}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#define conditions like clinical parameters (CP) }
+\NormalTok{CP}\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"age"}\NormalTok{,}\StringTok{"hemoglobin"}\NormalTok{,}\StringTok{"map"}\NormalTok{,}\StringTok{"bmi"}\NormalTok{,}\StringTok{"egfr"}\NormalTok{,}\StringTok{"logacr"}\NormalTok{)}
+
+\CommentTok{\#make a dataframe to hold results for each year and group}
+\NormalTok{dfResults}\OtherTok{\textless{}{-}}\FunctionTok{data.frame}\NormalTok{(}\FunctionTok{matrix}\NormalTok{(}\AttributeTok{nrow=}\DecValTok{6}\NormalTok{, }\AttributeTok{ncol =} \DecValTok{7}\NormalTok{))}
+\FunctionTok{colnames}\NormalTok{(dfResults)}\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"tertile"}\NormalTok{,}\StringTok{"year"}\NormalTok{,}\StringTok{"TPV"}\NormalTok{,}\StringTok{"NPV"}\NormalTok{,}\StringTok{"P\_event"}\NormalTok{,}\StringTok{"N\_event"}\NormalTok{,}\StringTok{"prevalence [\%]"}\NormalTok{)}
+
+
+\CommentTok{\#Extract time to events columns from rawdata}
+\NormalTok{outcomes}\OtherTok{\textless{}{-}}\FunctionTok{names}\NormalTok{(rawdata)[}\FunctionTok{grep}\NormalTok{(}\StringTok{"outcome"}\NormalTok{,}\FunctionTok{names}\NormalTok{(rawdata))]}
+\CommentTok{\#cbind q1, q2, and q3}
+\NormalTok{Qdata}\OtherTok{\textless{}{-}}\FunctionTok{cbind}\NormalTok{(T1pats,T2pats,T3pats)}
+\NormalTok{Q}\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"T1pats"}\NormalTok{,}\StringTok{"T2pats"}\NormalTok{,}\StringTok{"T3pats"}\NormalTok{)}
+
+\CommentTok{\#Loop over tertile}
+\ControlFlowTok{for}\NormalTok{ (j }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{3}\NormalTok{)\{}
+  \CommentTok{\#Loop over year}
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{6}\NormalTok{)\{}
+\NormalTok{    data}\OtherTok{\textless{}{-}}\FunctionTok{cbind}\NormalTok{(rawdata[outcomes[i]],rawdata[CP])}
+\NormalTok{    TerPats}\OtherTok{\textless{}{-}}\NormalTok{Qdata[,Q[j]]}
+\NormalTok{    idx}\OtherTok{\textless{}{-}}\FunctionTok{which}\NormalTok{(TerPats }\SpecialCharTok{\&}\NormalTok{ normopats)}
+\NormalTok{    COVdata}\OtherTok{\textless{}{-}}\FunctionTok{na.omit}\NormalTok{(data[idx,])}
+\NormalTok{    event}\OtherTok{\textless{}{-}}\FunctionTok{sum}\NormalTok{(data[outcomes[i]][idx,],}\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{    event\_no}\OtherTok{\textless{}{-}}\FunctionTok{sum}\NormalTok{(}\SpecialCharTok{!}\NormalTok{data[outcomes[i]][idx,],}\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+    \ControlFlowTok{if}\NormalTok{(event}\SpecialCharTok{!=}\DecValTok{0}\NormalTok{)\{}
+    \CommentTok{\#Define formula and training the glm model}
+\NormalTok{    mod\_formula }\OtherTok{\textless{}{-}} \FunctionTok{as.formula}\NormalTok{(}\FunctionTok{paste}\NormalTok{(outcomes[i],}\FunctionTok{paste}\NormalTok{(CP,}\AttributeTok{collapse =} \StringTok{"+"}\NormalTok{),}\AttributeTok{sep=}\StringTok{"\textasciitilde{}"}\NormalTok{))}
+\NormalTok{    mod }\OtherTok{\textless{}{-}} \FunctionTok{glm}\NormalTok{(}\AttributeTok{formula =}\NormalTok{ mod\_formula, }\AttributeTok{family =}\NormalTok{ binomial, }\AttributeTok{data =}\NormalTok{ COVdata)}
+  
+  
+    \DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#Make confusion matrix from glm model\#\#\#\#\#\#\#\#\#\#\#\#}
+    \CommentTok{\#use model to predict probability of default}
+\NormalTok{    pred}\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(mod, }\AttributeTok{data =}\NormalTok{ COVdata, }\AttributeTok{type=}\StringTok{"response"}\NormalTok{)}
+    \CommentTok{\#convert defaults from "Yes" and "No" to 1\textquotesingle{}s and 0\textquotesingle{}s}
+\NormalTok{    ActualLabel }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(COVdata[outcomes[i]]}\SpecialCharTok{==}\StringTok{"TRUE"}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{    optimal }\OtherTok{\textless{}{-}} \FunctionTok{optimalCutoff}\NormalTok{(ActualLabel, pred)[}\DecValTok{1}\NormalTok{]}
+    \CommentTok{\#create confusion matrix}
+\NormalTok{    r}\OtherTok{=}\FunctionTok{confusionMatrix}\NormalTok{(ActualLabel, pred,}\AttributeTok{threshold =}\NormalTok{ optimal)}
+\NormalTok{    r}
+    \CommentTok{\#True posive value and False positive value}
+\NormalTok{    TP}\OtherTok{=}\NormalTok{r[}\DecValTok{1}\NormalTok{,}\DecValTok{1}\NormalTok{]}
+\NormalTok{    FP}\OtherTok{=}\NormalTok{r[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{]}
+\NormalTok{    FN}\OtherTok{=}\NormalTok{r[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{]}
+\NormalTok{    TN}\OtherTok{=}\NormalTok{r[}\DecValTok{2}\NormalTok{,}\DecValTok{2}\NormalTok{]}
+\NormalTok{    PPV1}\OtherTok{=}\NormalTok{TP}\SpecialCharTok{/}\NormalTok{(TP}\SpecialCharTok{+}\NormalTok{FP)}
+\NormalTok{    NPV1}\OtherTok{=}\NormalTok{TN}\SpecialCharTok{/}\NormalTok{(TN}\SpecialCharTok{+}\NormalTok{FN)}
+  
+    \DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#Book keeping column\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}
+    \CommentTok{\#Save each tertile}
+\NormalTok{    dfResults[i,}\StringTok{"tertile"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{j}
+    \CommentTok{\#Save each year outcome}
+\NormalTok{    dfResults[i,}\StringTok{"year"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{i}
+    \CommentTok{\#Save PPV and NPV value}
+\NormalTok{    dfResults[i,}\StringTok{"TPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(PPV1,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    dfResults[i,}\StringTok{"NPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(NPV1,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    dfResults[i,}\StringTok{"P\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event}
+\NormalTok{    dfResults[i,}\StringTok{"N\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event\_no}
+\NormalTok{    dfResults[i,}\StringTok{"prevalence [\%]"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(event}\SpecialCharTok{/}\NormalTok{(event}\SpecialCharTok{+}\NormalTok{event\_no)}\SpecialCharTok{*}\DecValTok{100}\NormalTok{,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    \}}\ControlFlowTok{else}\NormalTok{\{}
+     \CommentTok{\#Save each tertile}
+\NormalTok{    dfResults[i,}\StringTok{"tertile"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{j}
+    \CommentTok{\#Save each year outcome}
+\NormalTok{    dfResults[i,}\StringTok{"year"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{ i}
+    \CommentTok{\#Save PPV and NPV value}
+\NormalTok{    dfResults[i,}\StringTok{"TPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\DecValTok{0}
+\NormalTok{    dfResults[i,}\StringTok{"NPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\DecValTok{0}
+\NormalTok{    dfResults[i,}\StringTok{"P\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event}
+\NormalTok{    dfResults[i,}\StringTok{"N\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event\_no}
+\NormalTok{    dfResults[i,}\StringTok{"prevalence [\%]"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(event}\SpecialCharTok{/}\NormalTok{(event}\SpecialCharTok{+}\NormalTok{event\_no)}\SpecialCharTok{*}\DecValTok{100}\NormalTok{,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    \}}
+
+\NormalTok{  \}}
+  \FunctionTok{print}\NormalTok{(dfResults)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   tertile year  TPV NPV P_event N_event prevalence [%]
+## 1       1    1 0.00 0.0       0     110           0.00
+## 2       1    2 1.00 1.0       1     108           0.92
+## 3       1    3 0.99 0.5       2     100           1.96
+## 4       1    4 0.99 0.5       2      87           2.25
+## 5       1    5 0.00 0.0       0      83           0.00
+## 6       1    6 0.97 1.0       3      71           4.05
+##   tertile year  TPV  NPV P_event N_event prevalence [%]
+## 1       2    1 0.99 1.00       2      92           2.13
+## 2       2    2 0.99 1.00       2      87           2.25
+## 3       2    3 0.98 0.00       2      86           2.27
+## 4       2    4 0.99 1.00       3      73           3.95
+## 5       2    5 0.97 1.00       3      65           4.41
+## 6       2    6 0.98 0.67       3      56           5.08
+##   tertile year  TPV  NPV P_event N_event prevalence [%]
+## 1       3    1 0.00 0.00       0      88           0.00
+## 2       3    2 0.96 0.00       3      83           3.49
+## 3       3    3 0.99 0.50       2      79           2.47
+## 4       3    4 1.00 1.00       1      72           1.37
+## 5       3    5 0.94 1.00       5      65           7.14
+## 6       3    6 0.91 0.71      10      54          15.62
+\end{verbatim}
+
+\hypertarget{clinical-parameter-and-adenine-cpad-true-positive-and-false-positive-for-each-year-1-to-6}{%
+\subsection{Clinical parameter and Adenine (CP+AD): True positive and
+False positive for each year (1 to
+6)}\label{clinical-parameter-and-adenine-cpad-true-positive-and-false-positive-for-each-year-1-to-6}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#define conditions like clinical parameters (CP) }
+\NormalTok{CP}\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"predictor"}\NormalTok{,}\StringTok{"age"}\NormalTok{,}\StringTok{"hemoglobin"}\NormalTok{,}\StringTok{"map"}\NormalTok{,}\StringTok{"bmi"}\NormalTok{,}\StringTok{"egfr"}\NormalTok{,}\StringTok{"logacr"}\NormalTok{)}
+
+\CommentTok{\#make a dataframe to hold results for each year and group}
+\NormalTok{dfResults}\OtherTok{\textless{}{-}}\FunctionTok{data.frame}\NormalTok{(}\FunctionTok{matrix}\NormalTok{(}\AttributeTok{nrow=}\DecValTok{6}\NormalTok{, }\AttributeTok{ncol =} \DecValTok{7}\NormalTok{))}
+\FunctionTok{colnames}\NormalTok{(dfResults)}\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"tertile"}\NormalTok{,}\StringTok{"year"}\NormalTok{,}\StringTok{"TPV"}\NormalTok{,}\StringTok{"NPV"}\NormalTok{,}\StringTok{"P\_event"}\NormalTok{,}\StringTok{"N\_event"}\NormalTok{,}\StringTok{"prevalence [\%]"}\NormalTok{)}
+
+
+\CommentTok{\#Extract time to events columns from rawdata}
+\NormalTok{outcomes}\OtherTok{\textless{}{-}}\FunctionTok{names}\NormalTok{(rawdata)[}\FunctionTok{grep}\NormalTok{(}\StringTok{"outcome"}\NormalTok{,}\FunctionTok{names}\NormalTok{(rawdata))]}
+\CommentTok{\#cbind q1, q2, and q3}
+\NormalTok{Qdata}\OtherTok{\textless{}{-}}\FunctionTok{cbind}\NormalTok{(T1pats,T2pats,T3pats)}
+\NormalTok{Q}\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"T1pats"}\NormalTok{,}\StringTok{"T2pats"}\NormalTok{,}\StringTok{"T3pats"}\NormalTok{)}
+
+\CommentTok{\#Loop over tertile}
+\ControlFlowTok{for}\NormalTok{ (j }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{3}\NormalTok{)\{}
+  \CommentTok{\#Loop over year}
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{6}\NormalTok{)\{}
+\NormalTok{    data}\OtherTok{\textless{}{-}}\FunctionTok{cbind}\NormalTok{(rawdata[outcomes[i]],rawdata[CP])}
+\NormalTok{    TerPats}\OtherTok{\textless{}{-}}\NormalTok{Qdata[,Q[j]]}
+\NormalTok{    idx}\OtherTok{\textless{}{-}}\FunctionTok{which}\NormalTok{(TerPats }\SpecialCharTok{\&}\NormalTok{ normopats)}
+\NormalTok{    COVdata}\OtherTok{\textless{}{-}}\FunctionTok{na.omit}\NormalTok{(data[idx,])}
+\NormalTok{    event}\OtherTok{\textless{}{-}}\FunctionTok{sum}\NormalTok{(data[outcomes[i]][idx,],}\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{    event\_no}\OtherTok{\textless{}{-}}\FunctionTok{sum}\NormalTok{(}\SpecialCharTok{!}\NormalTok{data[outcomes[i]][idx,],}\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+    \ControlFlowTok{if}\NormalTok{(event}\SpecialCharTok{!=}\DecValTok{0}\NormalTok{)\{}
+    \CommentTok{\#Define formula and training the glm model}
+\NormalTok{    mod\_formula }\OtherTok{\textless{}{-}} \FunctionTok{as.formula}\NormalTok{(}\FunctionTok{paste}\NormalTok{(outcomes[i],}\FunctionTok{paste}\NormalTok{(CP,}\AttributeTok{collapse =} \StringTok{"+"}\NormalTok{),}\AttributeTok{sep=}\StringTok{"\textasciitilde{}"}\NormalTok{))}
+\NormalTok{    mod }\OtherTok{\textless{}{-}} \FunctionTok{glm}\NormalTok{(}\AttributeTok{formula =}\NormalTok{ mod\_formula, }\AttributeTok{family =}\NormalTok{ binomial, }\AttributeTok{data =}\NormalTok{ COVdata)}
+  
+  
+    \DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#Make confusion matrix from glm model\#\#\#\#\#\#\#\#\#\#\#\#}
+    \CommentTok{\#use model to predict probability of default}
+\NormalTok{    pred}\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(mod, }\AttributeTok{data =}\NormalTok{ COVdata, }\AttributeTok{type=}\StringTok{"response"}\NormalTok{)}
+    \CommentTok{\#convert defaults from "Yes" and "No" to 1\textquotesingle{}s and 0\textquotesingle{}s}
+\NormalTok{    ActualLabel }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(COVdata[outcomes[i]]}\SpecialCharTok{==}\StringTok{"TRUE"}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{    optimal }\OtherTok{\textless{}{-}} \FunctionTok{optimalCutoff}\NormalTok{(ActualLabel, pred)[}\DecValTok{1}\NormalTok{]}
+    \CommentTok{\#create confusion matrix}
+\NormalTok{    r}\OtherTok{=}\FunctionTok{confusionMatrix}\NormalTok{(ActualLabel, pred,}\AttributeTok{threshold =}\NormalTok{ optimal)}
+  
+    \CommentTok{\#True posive value and False positive value}
+\NormalTok{    TP}\OtherTok{=}\NormalTok{r[}\DecValTok{1}\NormalTok{,}\DecValTok{1}\NormalTok{]}
+\NormalTok{    FP}\OtherTok{=}\NormalTok{r[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{]}
+\NormalTok{    FN}\OtherTok{=}\NormalTok{r[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{]}
+\NormalTok{    TN}\OtherTok{=}\NormalTok{r[}\DecValTok{2}\NormalTok{,}\DecValTok{2}\NormalTok{]}
+\NormalTok{    PPV1}\OtherTok{=}\NormalTok{TP}\SpecialCharTok{/}\NormalTok{(TP}\SpecialCharTok{+}\NormalTok{FP)}
+\NormalTok{    NPV1}\OtherTok{=}\NormalTok{TN}\SpecialCharTok{/}\NormalTok{(TN}\SpecialCharTok{+}\NormalTok{FN)}
+  
+    \DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#Book keeping column\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}
+    \CommentTok{\#Save each tertile}
+\NormalTok{    dfResults[i,}\StringTok{"tertile"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{j}
+    \CommentTok{\#Save each year outcome}
+\NormalTok{    dfResults[i,}\StringTok{"year"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{i}
+    \CommentTok{\#Save PPV and NPV value}
+\NormalTok{    dfResults[i,}\StringTok{"TPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(PPV1,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    dfResults[i,}\StringTok{"NPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(NPV1,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    dfResults[i,}\StringTok{"P\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event}
+\NormalTok{    dfResults[i,}\StringTok{"N\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event\_no  }
+\NormalTok{    dfResults[i,}\StringTok{"prevalence [\%]"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(event}\SpecialCharTok{/}\NormalTok{(event}\SpecialCharTok{+}\NormalTok{event\_no)}\SpecialCharTok{*}\DecValTok{100}\NormalTok{,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    \}}\ControlFlowTok{else}\NormalTok{\{}
+     \CommentTok{\#Save each tertile}
+\NormalTok{    dfResults[i,}\StringTok{"tertile"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{j}
+    \CommentTok{\#Save each year outcome}
+\NormalTok{    dfResults[i,}\StringTok{"year"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{ i}
+    \CommentTok{\#Save PPV and NPV value}
+\NormalTok{    dfResults[i,}\StringTok{"TPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\DecValTok{0}
+\NormalTok{    dfResults[i,}\StringTok{"NPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\DecValTok{0}
+\NormalTok{    dfResults[i,}\StringTok{"P\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event}
+\NormalTok{    dfResults[i,}\StringTok{"N\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event\_no  }
+\NormalTok{    dfResults[i,}\StringTok{"prevalence [\%]"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(event}\SpecialCharTok{/}\NormalTok{(event}\SpecialCharTok{+}\NormalTok{event\_no)}\SpecialCharTok{*}\DecValTok{100}\NormalTok{,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    \}}
+
+\NormalTok{  \}}
+  \FunctionTok{print}\NormalTok{(dfResults)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   tertile year  TPV  NPV P_event N_event prevalence [%]
+## 1       1    1 0.00 0.00       0     110           0.00
+## 2       1    2 1.00 1.00       1     108           0.92
+## 3       1    3 0.99 1.00       2     100           1.96
+## 4       1    4 0.99 0.33       2      87           2.25
+## 5       1    5 0.00 0.00       0      83           0.00
+## 6       1    6 0.97 1.00       3      71           4.05
+##   tertile year  TPV NPV P_event N_event prevalence [%]
+## 1       2    1 1.00   1       2      92           2.13
+## 2       2    2 1.00   1       2      87           2.25
+## 3       2    3 0.98   0       2      86           2.27
+## 4       2    4 1.00   1       3      73           3.95
+## 5       2    5 0.97   1       3      65           4.41
+## 6       2    6 1.00   1       3      56           5.08
+##   tertile year  TPV  NPV P_event N_event prevalence [%]
+## 1       3    1 0.00 0.00       0      88           0.00
+## 2       3    2 0.98 1.00       3      83           3.49
+## 3       3    3 0.99 0.50       2      79           2.47
+## 4       3    4 1.00 1.00       1      72           1.37
+## 5       3    5 0.94 1.00       5      65           7.14
+## 6       3    6 0.91 0.71      10      54          15.62
+\end{verbatim}
+
+\hypertarget{micro-group}{%
+\section{Micro group}\label{micro-group}}
+
+\hypertarget{clinical-parameter-cp-true-positive-and-false-positive-for-each-year-1-to-6-1}{%
+\subsection{Clinical parameter (CP): True positive and False positive
+for each year (1 to
+6)}\label{clinical-parameter-cp-true-positive-and-false-positive-for-each-year-1-to-6-1}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#define conditions like clinical parameters (CP) }
+\NormalTok{CP}\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"age"}\NormalTok{,}\StringTok{"hemoglobin"}\NormalTok{,}\StringTok{"map"}\NormalTok{,}\StringTok{"bmi"}\NormalTok{,}\StringTok{"egfr"}\NormalTok{,}\StringTok{"logacr"}\NormalTok{)}
+
+\CommentTok{\#make a dataframe to hold results for each year and group}
+\NormalTok{dfResults}\OtherTok{\textless{}{-}}\FunctionTok{data.frame}\NormalTok{(}\FunctionTok{matrix}\NormalTok{(}\AttributeTok{nrow=}\DecValTok{6}\NormalTok{, }\AttributeTok{ncol =} \DecValTok{7}\NormalTok{))}
+\FunctionTok{colnames}\NormalTok{(dfResults)}\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"tertile"}\NormalTok{,}\StringTok{"year"}\NormalTok{,}\StringTok{"TPV"}\NormalTok{,}\StringTok{"NPV"}\NormalTok{,}\StringTok{"P\_event"}\NormalTok{,}\StringTok{"N\_event"}\NormalTok{,}\StringTok{"prevalence [\%]"}\NormalTok{)}
+
+
+\CommentTok{\#Extract time to events columns from rawdata}
+\NormalTok{outcomes}\OtherTok{\textless{}{-}}\FunctionTok{names}\NormalTok{(rawdata)[}\FunctionTok{grep}\NormalTok{(}\StringTok{"outcome"}\NormalTok{,}\FunctionTok{names}\NormalTok{(rawdata))]}
+\CommentTok{\#cbind q1, q2, and q3}
+\NormalTok{Qdata}\OtherTok{\textless{}{-}}\FunctionTok{cbind}\NormalTok{(T1pats,T2pats,T3pats)}
+\NormalTok{Q}\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"T1pats"}\NormalTok{,}\StringTok{"T2pats"}\NormalTok{,}\StringTok{"T3pats"}\NormalTok{)}
+
+\CommentTok{\#Loop over tertile}
+\ControlFlowTok{for}\NormalTok{ (j }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{3}\NormalTok{)\{}
+  \CommentTok{\#Loop over year}
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{6}\NormalTok{)\{}
+\NormalTok{    data}\OtherTok{\textless{}{-}}\FunctionTok{cbind}\NormalTok{(rawdata[outcomes[i]],rawdata[CP])}
+\NormalTok{    TerPats}\OtherTok{\textless{}{-}}\NormalTok{Qdata[,Q[j]]}
+\NormalTok{    idx}\OtherTok{\textless{}{-}}\FunctionTok{which}\NormalTok{(TerPats }\SpecialCharTok{\&}\NormalTok{ micropats)}
+\NormalTok{    COVdata}\OtherTok{\textless{}{-}}\FunctionTok{na.omit}\NormalTok{(data[idx,])}
+\NormalTok{    event}\OtherTok{\textless{}{-}}\FunctionTok{sum}\NormalTok{(data[outcomes[i]][idx,],}\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{    event\_no}\OtherTok{\textless{}{-}}\FunctionTok{sum}\NormalTok{(}\SpecialCharTok{!}\NormalTok{data[outcomes[i]][idx,],}\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+    \ControlFlowTok{if}\NormalTok{(event}\SpecialCharTok{!=}\DecValTok{0}\NormalTok{)\{}
+    \CommentTok{\#Define formula and training the glm model}
+\NormalTok{    mod\_formula }\OtherTok{\textless{}{-}} \FunctionTok{as.formula}\NormalTok{(}\FunctionTok{paste}\NormalTok{(outcomes[i],}\FunctionTok{paste}\NormalTok{(CP,}\AttributeTok{collapse =} \StringTok{"+"}\NormalTok{),}\AttributeTok{sep=}\StringTok{"\textasciitilde{}"}\NormalTok{))}
+\NormalTok{    mod }\OtherTok{\textless{}{-}} \FunctionTok{glm}\NormalTok{(}\AttributeTok{formula =}\NormalTok{ mod\_formula, }\AttributeTok{family =}\NormalTok{ binomial, }\AttributeTok{data =}\NormalTok{ COVdata)}
+  
+  
+    \DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#Make confusion matrix from glm model\#\#\#\#\#\#\#\#\#\#\#\#}
+    \CommentTok{\#use model to predict probability of default}
+\NormalTok{    pred}\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(mod, }\AttributeTok{data =}\NormalTok{ COVdata, }\AttributeTok{type=}\StringTok{"response"}\NormalTok{)}
+    \CommentTok{\#convert defaults from "Yes" and "No" to 1\textquotesingle{}s and 0\textquotesingle{}s}
+\NormalTok{    ActualLabel }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(COVdata[outcomes[i]]}\SpecialCharTok{==}\StringTok{"TRUE"}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{    optimal }\OtherTok{\textless{}{-}} \FunctionTok{optimalCutoff}\NormalTok{(ActualLabel, pred)[}\DecValTok{1}\NormalTok{]}
+    \CommentTok{\#create confusion matrix}
+\NormalTok{    r}\OtherTok{=}\FunctionTok{confusionMatrix}\NormalTok{(ActualLabel, pred,}\AttributeTok{threshold =}\NormalTok{ optimal)}
+  
+    \CommentTok{\#True posive value and False positive value}
+\NormalTok{    TP}\OtherTok{=}\NormalTok{r[}\DecValTok{1}\NormalTok{,}\DecValTok{1}\NormalTok{]}
+\NormalTok{    FP}\OtherTok{=}\NormalTok{r[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{]}
+\NormalTok{    FN}\OtherTok{=}\NormalTok{r[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{]}
+\NormalTok{    TN}\OtherTok{=}\NormalTok{r[}\DecValTok{2}\NormalTok{,}\DecValTok{2}\NormalTok{]}
+\NormalTok{    PPV1}\OtherTok{=}\NormalTok{TP}\SpecialCharTok{/}\NormalTok{(TP}\SpecialCharTok{+}\NormalTok{FP)}
+\NormalTok{    NPV1}\OtherTok{=}\NormalTok{TN}\SpecialCharTok{/}\NormalTok{(TN}\SpecialCharTok{+}\NormalTok{FN)}
+    \DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#Book keeping column\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}
+    \CommentTok{\#Save each tertile}
+\NormalTok{    dfResults[i,}\StringTok{"tertile"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{j}
+    \CommentTok{\#Save each year outcome}
+\NormalTok{    dfResults[i,}\StringTok{"year"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{i}
+    \CommentTok{\#Save PPV and NPV value}
+\NormalTok{    dfResults[i,}\StringTok{"TPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(PPV1,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    dfResults[i,}\StringTok{"NPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(NPV1,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    dfResults[i,}\StringTok{"P\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event}
+\NormalTok{    dfResults[i,}\StringTok{"N\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event\_no  }
+\NormalTok{    dfResults[i,}\StringTok{"prevalence [\%]"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(event}\SpecialCharTok{/}\NormalTok{(event}\SpecialCharTok{+}\NormalTok{event\_no)}\SpecialCharTok{*}\DecValTok{100}\NormalTok{,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    \}}\ControlFlowTok{else}\NormalTok{\{}
+     \CommentTok{\#Save each tertile}
+\NormalTok{    dfResults[i,}\StringTok{"tertile"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{j}
+    \CommentTok{\#Save each year outcome}
+\NormalTok{    dfResults[i,}\StringTok{"year"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{ i}
+    \CommentTok{\#Save PPV and NPV value}
+\NormalTok{    dfResults[i,}\StringTok{"TPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\DecValTok{0}
+\NormalTok{    dfResults[i,}\StringTok{"NPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\DecValTok{0}
+\NormalTok{    dfResults[i,}\StringTok{"P\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event}
+\NormalTok{    dfResults[i,}\StringTok{"N\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event\_no }
+\NormalTok{    dfResults[i,}\StringTok{"prevalence [\%]"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(event}\SpecialCharTok{/}\NormalTok{(event}\SpecialCharTok{+}\NormalTok{event\_no)}\SpecialCharTok{*}\DecValTok{100}\NormalTok{,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    \}}
+
+\NormalTok{  \}}
+  \FunctionTok{print}\NormalTok{(dfResults)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   tertile year  TPV  NPV P_event N_event prevalence [%]
+## 1       1    1 1.00 1.00       1      83           1.19
+## 2       1    2 0.98 0.50       3      81           3.57
+## 3       1    3 0.92 0.00       6      72           7.69
+## 4       1    4 0.95 0.57       7      56          11.11
+## 5       1    5 0.90 1.00       8      47          14.55
+## 6       1    6 1.00 1.00       5      39          11.36
+##   tertile year  TPV  NPV P_event N_event prevalence [%]
+## 1       2    1 1.00 0.50       1      82           1.20
+## 2       2    2 0.95 0.00       4      77           4.94
+## 3       2    3 0.92 0.75       9      68          11.69
+## 4       2    4 0.91 1.00       7      61          10.29
+## 5       2    5 0.85 0.00       8      45          15.09
+## 6       2    6 0.91 1.00       5      41          10.87
+##   tertile year  TPV  NPV P_event N_event prevalence [%]
+## 1       3    1 0.98 1.00       3      87           3.33
+## 2       3    2 0.95 0.00       4      84           4.55
+## 3       3    3 0.87 0.50      12      75          13.79
+## 4       3    4 0.83 1.00      13      59          18.06
+## 5       3    5 0.80 0.50      12      45          21.05
+## 6       3    6 0.88 0.62      10      39          20.41
+\end{verbatim}
+
+\hypertarget{clinical-parameter-and-adenine-cpad-true-positive-and-false-positive-for-each-year-1-to-6-1}{%
+\subsection{Clinical parameter and Adenine (CP+AD): True positive and
+False positive for each year (1 to
+6)}\label{clinical-parameter-and-adenine-cpad-true-positive-and-false-positive-for-each-year-1-to-6-1}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#define conditions like clinical parameters (CP) }
+\NormalTok{CP}\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"predictor"}\NormalTok{,}\StringTok{"age"}\NormalTok{,}\StringTok{"hemoglobin"}\NormalTok{,}\StringTok{"map"}\NormalTok{,}\StringTok{"bmi"}\NormalTok{,}\StringTok{"egfr"}\NormalTok{,}\StringTok{"logacr"}\NormalTok{)}
+
+\CommentTok{\#make a dataframe to hold results for each year and group}
+\NormalTok{dfResults}\OtherTok{\textless{}{-}}\FunctionTok{data.frame}\NormalTok{(}\FunctionTok{matrix}\NormalTok{(}\AttributeTok{nrow=}\DecValTok{6}\NormalTok{, }\AttributeTok{ncol =} \DecValTok{7}\NormalTok{))}
+\FunctionTok{colnames}\NormalTok{(dfResults)}\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"tertile"}\NormalTok{,}\StringTok{"year"}\NormalTok{,}\StringTok{"TPV"}\NormalTok{,}\StringTok{"NPV"}\NormalTok{,}\StringTok{"P\_event"}\NormalTok{,}\StringTok{"N\_event"}\NormalTok{,}\StringTok{"prevalence [\%]"}\NormalTok{)}
+
+
+\CommentTok{\#Extract time to events columns from rawdata}
+\NormalTok{outcomes}\OtherTok{\textless{}{-}}\FunctionTok{names}\NormalTok{(rawdata)[}\FunctionTok{grep}\NormalTok{(}\StringTok{"outcome"}\NormalTok{,}\FunctionTok{names}\NormalTok{(rawdata))]}
+\CommentTok{\#cbind q1, q2, and q3}
+\NormalTok{Qdata}\OtherTok{\textless{}{-}}\FunctionTok{cbind}\NormalTok{(T1pats,T2pats,T3pats)}
+\NormalTok{Q}\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"T1pats"}\NormalTok{,}\StringTok{"T2pats"}\NormalTok{,}\StringTok{"T3pats"}\NormalTok{)}
+
+\CommentTok{\#Loop over tertile}
+\ControlFlowTok{for}\NormalTok{ (j }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{3}\NormalTok{)\{}
+  \CommentTok{\#Loop over year}
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{6}\NormalTok{)\{}
+\NormalTok{    data}\OtherTok{\textless{}{-}}\FunctionTok{cbind}\NormalTok{(rawdata[outcomes[i]],rawdata[CP])}
+\NormalTok{    TerPats}\OtherTok{\textless{}{-}}\NormalTok{Qdata[,Q[j]]}
+\NormalTok{    idx}\OtherTok{\textless{}{-}}\FunctionTok{which}\NormalTok{(TerPats }\SpecialCharTok{\&}\NormalTok{ micropats)}
+\NormalTok{    COVdata}\OtherTok{\textless{}{-}}\FunctionTok{na.omit}\NormalTok{(data[idx,])}
+\NormalTok{    event}\OtherTok{\textless{}{-}}\FunctionTok{sum}\NormalTok{(data[outcomes[i]][idx,],}\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{    event\_no}\OtherTok{\textless{}{-}}\FunctionTok{sum}\NormalTok{(}\SpecialCharTok{!}\NormalTok{data[outcomes[i]][idx,],}\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+    \ControlFlowTok{if}\NormalTok{(event}\SpecialCharTok{!=}\DecValTok{0}\NormalTok{)\{}
+    \CommentTok{\#Define formula and training the glm model}
+\NormalTok{    mod\_formula }\OtherTok{\textless{}{-}} \FunctionTok{as.formula}\NormalTok{(}\FunctionTok{paste}\NormalTok{(outcomes[i],}\FunctionTok{paste}\NormalTok{(CP,}\AttributeTok{collapse =} \StringTok{"+"}\NormalTok{),}\AttributeTok{sep=}\StringTok{"\textasciitilde{}"}\NormalTok{))}
+\NormalTok{    mod }\OtherTok{\textless{}{-}} \FunctionTok{glm}\NormalTok{(}\AttributeTok{formula =}\NormalTok{ mod\_formula, }\AttributeTok{family =}\NormalTok{ binomial, }\AttributeTok{data =}\NormalTok{ COVdata)}
+  
+  
+    \DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#Make confusion matrix from glm model\#\#\#\#\#\#\#\#\#\#\#\#}
+    \CommentTok{\#use model to predict probability of default}
+\NormalTok{    pred}\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(mod, }\AttributeTok{data =}\NormalTok{ COVdata, }\AttributeTok{type=}\StringTok{"response"}\NormalTok{)}
+    \CommentTok{\#convert defaults from "Yes" and "No" to 1\textquotesingle{}s and 0\textquotesingle{}s}
+\NormalTok{    ActualLabel }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(COVdata[outcomes[i]]}\SpecialCharTok{==}\StringTok{"TRUE"}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{    optimal }\OtherTok{\textless{}{-}} \FunctionTok{optimalCutoff}\NormalTok{(ActualLabel, pred)[}\DecValTok{1}\NormalTok{]}
+    \CommentTok{\#create confusion matrix}
+\NormalTok{    r}\OtherTok{=}\FunctionTok{confusionMatrix}\NormalTok{(ActualLabel, pred,}\AttributeTok{threshold =}\NormalTok{ optimal)}
+  
+    \CommentTok{\#True posive value and False positive value}
+\NormalTok{    TP}\OtherTok{=}\NormalTok{r[}\DecValTok{1}\NormalTok{,}\DecValTok{1}\NormalTok{]}
+\NormalTok{    FP}\OtherTok{=}\NormalTok{r[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{]}
+\NormalTok{    FN}\OtherTok{=}\NormalTok{r[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{]}
+\NormalTok{    TN}\OtherTok{=}\NormalTok{r[}\DecValTok{2}\NormalTok{,}\DecValTok{2}\NormalTok{]}
+\NormalTok{    PPV1}\OtherTok{=}\NormalTok{TP}\SpecialCharTok{/}\NormalTok{(TP}\SpecialCharTok{+}\NormalTok{FP)}
+\NormalTok{    NPV1}\OtherTok{=}\NormalTok{TN}\SpecialCharTok{/}\NormalTok{(TN}\SpecialCharTok{+}\NormalTok{FN)}
+  
+    \DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#Book keeping column\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}
+    \CommentTok{\#Save each tertile}
+\NormalTok{    dfResults[i,}\StringTok{"tertile"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{j}
+    \CommentTok{\#Save each year outcome}
+\NormalTok{    dfResults[i,}\StringTok{"year"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{i}
+    \CommentTok{\#Save PPV and NPV value}
+\NormalTok{    dfResults[i,}\StringTok{"TPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(PPV1,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    dfResults[i,}\StringTok{"NPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(NPV1,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    dfResults[i,}\StringTok{"P\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event}
+\NormalTok{    dfResults[i,}\StringTok{"N\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event\_no   }
+\NormalTok{    dfResults[i,}\StringTok{"prevalence [\%]"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(event}\SpecialCharTok{/}\NormalTok{(event}\SpecialCharTok{+}\NormalTok{event\_no)}\SpecialCharTok{*}\DecValTok{100}\NormalTok{,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    \}}\ControlFlowTok{else}\NormalTok{\{}
+     \CommentTok{\#Save each tertile}
+\NormalTok{    dfResults[i,}\StringTok{"tertile"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{j}
+    \CommentTok{\#Save each year outcome}
+\NormalTok{    dfResults[i,}\StringTok{"year"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{ i}
+    \CommentTok{\#Save PPV and NPV value}
+\NormalTok{    dfResults[i,}\StringTok{"TPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\DecValTok{0}
+\NormalTok{    dfResults[i,}\StringTok{"NPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\DecValTok{0}
+\NormalTok{    dfResults[i,}\StringTok{"P\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event}
+\NormalTok{    dfResults[i,}\StringTok{"N\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event\_no  }
+\NormalTok{    dfResults[i,}\StringTok{"prevalence [\%]"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(event}\SpecialCharTok{/}\NormalTok{(event}\SpecialCharTok{+}\NormalTok{event\_no)}\SpecialCharTok{*}\DecValTok{100}\NormalTok{,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    \}}
+
+\NormalTok{  \}}
+  \FunctionTok{print}\NormalTok{(dfResults)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   tertile year  TPV  NPV P_event N_event prevalence [%]
+## 1       1    1 1.00 1.00       1      83           1.19
+## 2       1    2 0.98 0.33       3      81           3.57
+## 3       1    3 0.92 0.00       6      72           7.69
+## 4       1    4 0.90 1.00       7      56          11.11
+## 5       1    5 0.90 1.00       8      47          14.55
+## 6       1    6 1.00 1.00       5      39          11.36
+##   tertile year  TPV  NPV P_event N_event prevalence [%]
+## 1       2    1 1.00 1.00       1      82           1.20
+## 2       2    2 0.96 1.00       4      77           4.94
+## 3       2    3 0.94 0.83       9      68          11.69
+## 4       2    4 0.91 1.00       7      61          10.29
+## 5       2    5 0.85 0.00       8      45          15.09
+## 6       2    6 0.91 1.00       5      41          10.87
+##   tertile year  TPV  NPV P_event N_event prevalence [%]
+## 1       3    1 0.98 1.00       3      87           3.33
+## 2       3    2 0.96 0.33       4      84           4.55
+## 3       3    3 0.87 1.00      12      75          13.79
+## 4       3    4 0.87 0.62      13      59          18.06
+## 5       3    5 0.80 0.50      12      45          21.05
+## 6       3    6 0.88 0.71      10      39          20.41
+\end{verbatim}
+
+\hypertarget{normalmicro-group}{%
+\section{Normal+Micro group}\label{normalmicro-group}}
+
+\hypertarget{clinical-parameter-cp-true-positive-and-false-positive-for-each-year-1-to-6-2}{%
+\subsection{Clinical parameter (CP): True positive and False positive
+for each year (1 to
+6)}\label{clinical-parameter-cp-true-positive-and-false-positive-for-each-year-1-to-6-2}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#define conditions like clinical parameters (CP) }
+\NormalTok{CP}\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"age"}\NormalTok{,}\StringTok{"hemoglobin"}\NormalTok{,}\StringTok{"map"}\NormalTok{,}\StringTok{"bmi"}\NormalTok{,}\StringTok{"egfr"}\NormalTok{,}\StringTok{"logacr"}\NormalTok{)}
+
+\CommentTok{\#make a dataframe to hold results for each year and group}
+\NormalTok{dfResults}\OtherTok{\textless{}{-}}\FunctionTok{data.frame}\NormalTok{(}\FunctionTok{matrix}\NormalTok{(}\AttributeTok{nrow=}\DecValTok{6}\NormalTok{, }\AttributeTok{ncol =} \DecValTok{7}\NormalTok{))}
+\FunctionTok{colnames}\NormalTok{(dfResults)}\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"tertile"}\NormalTok{,}\StringTok{"year"}\NormalTok{,}\StringTok{"TPV"}\NormalTok{,}\StringTok{"NPV"}\NormalTok{,}\StringTok{"P\_event"}\NormalTok{,}\StringTok{"N\_event"}\NormalTok{,}\StringTok{"prevalence [\%]"}\NormalTok{)}
+
+
+\CommentTok{\#Extract time to events columns from rawdata}
+\NormalTok{outcomes}\OtherTok{\textless{}{-}}\FunctionTok{names}\NormalTok{(rawdata)[}\FunctionTok{grep}\NormalTok{(}\StringTok{"outcome"}\NormalTok{,}\FunctionTok{names}\NormalTok{(rawdata))]}
+\CommentTok{\#cbind q1, q2, and q3}
+\NormalTok{Qdata}\OtherTok{\textless{}{-}}\FunctionTok{cbind}\NormalTok{(T1pats,T2pats,T3pats)}
+\NormalTok{Q}\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"T1pats"}\NormalTok{,}\StringTok{"T2pats"}\NormalTok{,}\StringTok{"T3pats"}\NormalTok{)}
+
+\CommentTok{\#Loop over tertile}
+\ControlFlowTok{for}\NormalTok{ (j }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{3}\NormalTok{)\{}
+  \CommentTok{\#Loop over year}
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{6}\NormalTok{)\{}
+\NormalTok{    data}\OtherTok{\textless{}{-}}\FunctionTok{cbind}\NormalTok{(rawdata[outcomes[i]],rawdata[CP])}
+\NormalTok{    TerPats}\OtherTok{\textless{}{-}}\NormalTok{Qdata[,Q[j]]}
+\NormalTok{    idx}\OtherTok{\textless{}{-}}\FunctionTok{which}\NormalTok{(TerPats }\SpecialCharTok{\&}\NormalTok{ normopats }\SpecialCharTok{|}\NormalTok{ TerPats }\SpecialCharTok{\&}\NormalTok{ micropats)}
+\NormalTok{    COVdata}\OtherTok{\textless{}{-}}\FunctionTok{na.omit}\NormalTok{(data[idx,])}
+\NormalTok{    event}\OtherTok{\textless{}{-}}\FunctionTok{sum}\NormalTok{(data[outcomes[i]][idx,],}\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{    event\_no}\OtherTok{\textless{}{-}}\FunctionTok{sum}\NormalTok{(}\SpecialCharTok{!}\NormalTok{data[outcomes[i]][idx,],}\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+    \ControlFlowTok{if}\NormalTok{(event}\SpecialCharTok{!=}\DecValTok{0}\NormalTok{)\{}
+    \CommentTok{\#Define formula and training the glm model}
+\NormalTok{    mod\_formula }\OtherTok{\textless{}{-}} \FunctionTok{as.formula}\NormalTok{(}\FunctionTok{paste}\NormalTok{(outcomes[i],}\FunctionTok{paste}\NormalTok{(CP,}\AttributeTok{collapse =} \StringTok{"+"}\NormalTok{),}\AttributeTok{sep=}\StringTok{"\textasciitilde{}"}\NormalTok{))}
+\NormalTok{    mod }\OtherTok{\textless{}{-}} \FunctionTok{glm}\NormalTok{(}\AttributeTok{formula =}\NormalTok{ mod\_formula, }\AttributeTok{family =}\NormalTok{ binomial, }\AttributeTok{data =}\NormalTok{ COVdata)}
+  
+  
+    \DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#Make confusion matrix from glm model\#\#\#\#\#\#\#\#\#\#\#\#}
+    \CommentTok{\#use model to predict probability of default}
+\NormalTok{    pred}\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(mod, }\AttributeTok{data =}\NormalTok{ COVdata, }\AttributeTok{type=}\StringTok{"response"}\NormalTok{)}
+    \CommentTok{\#convert defaults from "Yes" and "No" to 1\textquotesingle{}s and 0\textquotesingle{}s}
+\NormalTok{    ActualLabel }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(COVdata[outcomes[i]]}\SpecialCharTok{==}\StringTok{"TRUE"}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{    optimal }\OtherTok{\textless{}{-}} \FunctionTok{optimalCutoff}\NormalTok{(ActualLabel, pred)[}\DecValTok{1}\NormalTok{]}
+    \CommentTok{\#create confusion matrix}
+\NormalTok{    r}\OtherTok{=}\FunctionTok{confusionMatrix}\NormalTok{(ActualLabel, pred,}\AttributeTok{threshold =}\NormalTok{ optimal)}
+  
+    \CommentTok{\#True posive value and False positive value}
+\NormalTok{    TP}\OtherTok{=}\NormalTok{r[}\DecValTok{1}\NormalTok{,}\DecValTok{1}\NormalTok{]}
+\NormalTok{    FP}\OtherTok{=}\NormalTok{r[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{]}
+\NormalTok{    FN}\OtherTok{=}\NormalTok{r[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{]}
+\NormalTok{    TN}\OtherTok{=}\NormalTok{r[}\DecValTok{2}\NormalTok{,}\DecValTok{2}\NormalTok{]}
+\NormalTok{    PPV1}\OtherTok{=}\NormalTok{TP}\SpecialCharTok{/}\NormalTok{(TP}\SpecialCharTok{+}\NormalTok{FP)}
+\NormalTok{    NPV1}\OtherTok{=}\NormalTok{TN}\SpecialCharTok{/}\NormalTok{(TN}\SpecialCharTok{+}\NormalTok{FN)}
+  
+    \DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#Book keeping column\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}
+    \CommentTok{\#Save each tertile}
+\NormalTok{    dfResults[i,}\StringTok{"tertile"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{j}
+    \CommentTok{\#Save each year outcome}
+\NormalTok{    dfResults[i,}\StringTok{"year"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{i}
+    \CommentTok{\#Save PPV and NPV value}
+\NormalTok{    dfResults[i,}\StringTok{"TPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(PPV1,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    dfResults[i,}\StringTok{"NPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(NPV1,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    dfResults[i,}\StringTok{"P\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event}
+\NormalTok{    dfResults[i,}\StringTok{"N\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event\_no }
+\NormalTok{    dfResults[i,}\StringTok{"prevalence [\%]"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(event}\SpecialCharTok{/}\NormalTok{(event}\SpecialCharTok{+}\NormalTok{event\_no)}\SpecialCharTok{*}\DecValTok{100}\NormalTok{,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    \}}\ControlFlowTok{else}\NormalTok{\{}
+     \CommentTok{\#Save each tertile}
+\NormalTok{    dfResults[i,}\StringTok{"tertile"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{j}
+    \CommentTok{\#Save each year outcome}
+\NormalTok{    dfResults[i,}\StringTok{"year"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{ i}
+    \CommentTok{\#Save PPV and NPV value}
+\NormalTok{    dfResults[i,}\StringTok{"TPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\DecValTok{0}
+\NormalTok{    dfResults[i,}\StringTok{"NPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\DecValTok{0}
+\NormalTok{    dfResults[i,}\StringTok{"P\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event}
+\NormalTok{    dfResults[i,}\StringTok{"N\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event\_no   }
+\NormalTok{    dfResults[i,}\StringTok{"prevalence [\%]"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(event}\SpecialCharTok{/}\NormalTok{(event}\SpecialCharTok{+}\NormalTok{event\_no)}\SpecialCharTok{*}\DecValTok{100}\NormalTok{,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    \}}
+
+\NormalTok{  \}}
+  \FunctionTok{print}\NormalTok{(dfResults)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   tertile year  TPV  NPV P_event N_event prevalence [%]
+## 1       1    1 1.00 1.00       1     193           0.52
+## 2       1    2 0.98 0.50       4     189           2.07
+## 3       1    3 0.96 1.00       8     172           4.44
+## 4       1    4 0.95 0.67       9     143           5.92
+## 5       1    5 0.96 0.75       8     130           5.80
+## 6       1    6 0.95 1.00       8     110           6.78
+##   tertile year  TPV NPV P_event N_event prevalence [%]
+## 1       2    1 0.99 1.0       3     174           1.69
+## 2       2    2 0.97 0.5       6     164           3.53
+## 3       2    3 0.94 1.0      11     154           6.67
+## 4       2    4 0.94 1.0      10     134           6.94
+## 5       2    5 0.91 0.0      11     110           9.09
+## 6       2    6 0.92 0.0       8      97           7.62
+##   tertile year  TPV NPV P_event N_event prevalence [%]
+## 1       3    1 0.99 1.0       3     175           1.69
+## 2       3    2 0.96 0.0       7     167           4.02
+## 3       3    3 0.92 1.0      14     154           8.33
+## 4       3    4 0.91 1.0      14     131           9.66
+## 5       3    5 0.91 0.5      17     110          13.39
+## 6       3    6 0.83 0.5      20      93          17.70
+\end{verbatim}
+
+\hypertarget{clinical-parameter-and-adenine-cpad-true-positive-and-false-positive-for-each-year-1-to-6-2}{%
+\subsection{Clinical parameter and Adenine (CP+AD): True positive and
+False positive for each year (1 to
+6)}\label{clinical-parameter-and-adenine-cpad-true-positive-and-false-positive-for-each-year-1-to-6-2}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#define conditions like clinical parameters (CP) }
+\NormalTok{CP}\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"predictor"}\NormalTok{,}\StringTok{"age"}\NormalTok{,}\StringTok{"hemoglobin"}\NormalTok{,}\StringTok{"map"}\NormalTok{,}\StringTok{"bmi"}\NormalTok{,}\StringTok{"egfr"}\NormalTok{,}\StringTok{"logacr"}\NormalTok{)}
+
+\CommentTok{\#make a dataframe to hold results for each year and group}
+\NormalTok{dfResults}\OtherTok{\textless{}{-}}\FunctionTok{data.frame}\NormalTok{(}\FunctionTok{matrix}\NormalTok{(}\AttributeTok{nrow=}\DecValTok{6}\NormalTok{, }\AttributeTok{ncol =} \DecValTok{7}\NormalTok{))}
+\FunctionTok{colnames}\NormalTok{(dfResults)}\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"tertile"}\NormalTok{,}\StringTok{"year"}\NormalTok{,}\StringTok{"TPV"}\NormalTok{,}\StringTok{"NPV"}\NormalTok{,}\StringTok{"P\_event"}\NormalTok{,}\StringTok{"N\_event"}\NormalTok{,}\StringTok{"prevalence [\%]"}\NormalTok{)}
+
+
+\CommentTok{\#Extract time to events columns from rawdata}
+\NormalTok{outcomes}\OtherTok{\textless{}{-}}\FunctionTok{names}\NormalTok{(rawdata)[}\FunctionTok{grep}\NormalTok{(}\StringTok{"outcome"}\NormalTok{,}\FunctionTok{names}\NormalTok{(rawdata))]}
+\CommentTok{\#cbind q1, q2, and q3}
+\NormalTok{Qdata}\OtherTok{\textless{}{-}}\FunctionTok{cbind}\NormalTok{(T1pats,T2pats,T3pats)}
+\NormalTok{Q}\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"T1pats"}\NormalTok{,}\StringTok{"T2pats"}\NormalTok{,}\StringTok{"T3pats"}\NormalTok{)}
+
+\CommentTok{\#Loop over tertile}
+\ControlFlowTok{for}\NormalTok{ (j }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{3}\NormalTok{)\{}
+  \CommentTok{\#Loop over year}
+  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\DecValTok{6}\NormalTok{)\{}
+\NormalTok{    data}\OtherTok{\textless{}{-}}\FunctionTok{cbind}\NormalTok{(rawdata[outcomes[i]],rawdata[CP])}
+\NormalTok{    TerPats}\OtherTok{\textless{}{-}}\NormalTok{Qdata[,Q[j]]}
+\NormalTok{    idx}\OtherTok{\textless{}{-}}\FunctionTok{which}\NormalTok{(TerPats }\SpecialCharTok{\&}\NormalTok{ normopats }\SpecialCharTok{|}\NormalTok{ TerPats }\SpecialCharTok{\&}\NormalTok{ micropats)}
+\NormalTok{    COVdata}\OtherTok{\textless{}{-}}\FunctionTok{na.omit}\NormalTok{(data[idx,])}
+\NormalTok{    event}\OtherTok{\textless{}{-}}\FunctionTok{sum}\NormalTok{(data[outcomes[i]][idx,],}\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{    event\_no}\OtherTok{\textless{}{-}}\FunctionTok{sum}\NormalTok{(}\SpecialCharTok{!}\NormalTok{data[outcomes[i]][idx,],}\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+    \ControlFlowTok{if}\NormalTok{(event}\SpecialCharTok{!=}\DecValTok{0}\NormalTok{)\{}
+    \CommentTok{\#Define formula and training the glm model}
+\NormalTok{    mod\_formula }\OtherTok{\textless{}{-}} \FunctionTok{as.formula}\NormalTok{(}\FunctionTok{paste}\NormalTok{(outcomes[i],}\FunctionTok{paste}\NormalTok{(CP,}\AttributeTok{collapse =} \StringTok{"+"}\NormalTok{),}\AttributeTok{sep=}\StringTok{"\textasciitilde{}"}\NormalTok{))}
+\NormalTok{    mod }\OtherTok{\textless{}{-}} \FunctionTok{glm}\NormalTok{(}\AttributeTok{formula =}\NormalTok{ mod\_formula, }\AttributeTok{family =}\NormalTok{ binomial, }\AttributeTok{data =}\NormalTok{ COVdata)}
+  
+  
+    \DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#Make confusion matrix from glm model\#\#\#\#\#\#\#\#\#\#\#\#}
+    \CommentTok{\#use model to predict probability of default}
+\NormalTok{    pred}\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(mod, }\AttributeTok{data =}\NormalTok{ COVdata, }\AttributeTok{type=}\StringTok{"response"}\NormalTok{)}
+    \CommentTok{\#convert defaults from "Yes" and "No" to 1\textquotesingle{}s and 0\textquotesingle{}s}
+\NormalTok{    ActualLabel }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(COVdata[outcomes[i]]}\SpecialCharTok{==}\StringTok{"TRUE"}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{    optimal }\OtherTok{\textless{}{-}} \FunctionTok{optimalCutoff}\NormalTok{(ActualLabel, pred)[}\DecValTok{1}\NormalTok{]}
+    \CommentTok{\#create confusion matrix}
+\NormalTok{    r}\OtherTok{=}\FunctionTok{confusionMatrix}\NormalTok{(ActualLabel, pred,}\AttributeTok{threshold =}\NormalTok{ optimal)}
+  
+    \CommentTok{\#True posive value and False positive value}
+\NormalTok{    TP}\OtherTok{=}\NormalTok{r[}\DecValTok{1}\NormalTok{,}\DecValTok{1}\NormalTok{]}
+\NormalTok{    FP}\OtherTok{=}\NormalTok{r[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{]}
+\NormalTok{    FN}\OtherTok{=}\NormalTok{r[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{]}
+\NormalTok{    TN}\OtherTok{=}\NormalTok{r[}\DecValTok{2}\NormalTok{,}\DecValTok{2}\NormalTok{]}
+\NormalTok{    PPV1}\OtherTok{=}\NormalTok{TP}\SpecialCharTok{/}\NormalTok{(TP}\SpecialCharTok{+}\NormalTok{FP)}
+\NormalTok{    NPV1}\OtherTok{=}\NormalTok{TN}\SpecialCharTok{/}\NormalTok{(TN}\SpecialCharTok{+}\NormalTok{FN)}
+  
+    \DocumentationTok{\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#Book keeping column\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#}
+    \CommentTok{\#Save each tertile}
+\NormalTok{    dfResults[i,}\StringTok{"tertile"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{j}
+    \CommentTok{\#Save each year outcome}
+\NormalTok{    dfResults[i,}\StringTok{"year"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{i}
+    \CommentTok{\#Save PPV and NPV value}
+\NormalTok{    dfResults[i,}\StringTok{"TPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(PPV1,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    dfResults[i,}\StringTok{"NPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(NPV1,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    dfResults[i,}\StringTok{"P\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event}
+\NormalTok{    dfResults[i,}\StringTok{"N\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event\_no  }
+\NormalTok{    dfResults[i,}\StringTok{"prevalence [\%]"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(event}\SpecialCharTok{/}\NormalTok{(event}\SpecialCharTok{+}\NormalTok{event\_no)}\SpecialCharTok{*}\DecValTok{100}\NormalTok{,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    \}}\ControlFlowTok{else}\NormalTok{\{}
+     \CommentTok{\#Save each tertile}
+\NormalTok{    dfResults[i,}\StringTok{"tertile"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{j}
+    \CommentTok{\#Save each year outcome}
+\NormalTok{    dfResults[i,}\StringTok{"year"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{ i}
+    \CommentTok{\#Save PPV and NPV value}
+\NormalTok{    dfResults[i,}\StringTok{"TPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\DecValTok{0}
+\NormalTok{    dfResults[i,}\StringTok{"NPV"}\NormalTok{]}\OtherTok{\textless{}{-}}\DecValTok{0}
+\NormalTok{     dfResults[i,}\StringTok{"P\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event}
+\NormalTok{    dfResults[i,}\StringTok{"N\_event"}\NormalTok{]}\OtherTok{\textless{}{-}}\NormalTok{event\_no   }
+\NormalTok{    dfResults[i,}\StringTok{"prevalence [\%]"}\NormalTok{]}\OtherTok{\textless{}{-}}\FunctionTok{round}\NormalTok{(event}\SpecialCharTok{/}\NormalTok{(event}\SpecialCharTok{+}\NormalTok{event\_no)}\SpecialCharTok{*}\DecValTok{100}\NormalTok{,}\DecValTok{2}\NormalTok{)}
+\NormalTok{    \}}
+
+\NormalTok{  \}}
+  \FunctionTok{print}\NormalTok{(dfResults)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   tertile year  TPV  NPV P_event N_event prevalence [%]
+## 1       1    1 1.00 1.00       1     193           0.52
+## 2       1    2 0.98 0.33       4     189           2.07
+## 3       1    3 0.96 1.00       8     172           4.44
+## 4       1    4 0.95 1.00       9     143           5.92
+## 5       1    5 0.96 0.75       8     130           5.80
+## 6       1    6 0.95 1.00       8     110           6.78
+##   tertile year  TPV NPV P_event N_event prevalence [%]
+## 1       2    1 0.99 1.0       3     174           1.69
+## 2       2    2 0.96 0.0       6     164           3.53
+## 3       2    3 0.94 1.0      11     154           6.67
+## 4       2    4 0.94 0.5      10     134           6.94
+## 5       2    5 0.91 0.0      11     110           9.09
+## 6       2    6 0.92 0.0       8      97           7.62
+##   tertile year  TPV  NPV P_event N_event prevalence [%]
+## 1       3    1 0.99 0.50       3     175           1.69
+## 2       3    2 0.96 0.00       7     167           4.02
+## 3       3    3 0.92 1.00      14     154           8.33
+## 4       3    4 0.93 0.67      14     131           9.66
+## 5       3    5 0.91 0.50      17     110          13.39
+## 6       3    6 0.85 0.67      20      93          17.70
+\end{verbatim}
+
+\end{document}

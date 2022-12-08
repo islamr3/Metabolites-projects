@@ -1,0 +1,234 @@
+---
+title: ' PPV and NPV with the eGFR 40% decline at end of 6y for each NA and MA group
+  and also combined'
+author: Daniel Montemayor and Rabiul Islam<br><small>Center for Renal Precision Medicine<br>University
+  of Texas Health San Antonio School of Medicine</small>
+date: "<small>`r Sys.Date()`</small>"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    number_sections: yes
+    toc_float:
+      collapsed: no
+    code_folding: hide
+    theme: cerulean
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+  word_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+![Center for Renal Precision Medicine](https://dmontemayor.github.io/assets/Long_SOM/horizontal/JPG/UTHSA_Long-SOM_H_CMYK.jpg)
+
+# Brief
++PPV and NPV with eGFR decline of 40% in each of the bins for the normo, micro, and normal+Micro goup
++ pertition by Adenine Tertiles for NA, MA, and NA+MA groups.
++estimate PPV and NPV wrt years for each teritle 
++Positive event and negative events were estimate by removing the NAN value with patients
++prevalence rate (%)=(positive events/positive events+negative events)x100]: link: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4022000/
+ 
+ 
+ ```{r}
+knitr::opts_chunk$set(message = FALSE, warning=FALSE)
+```
+ 
+```{r requirements, message=FALSE, warning=FALSE}
+#Requirements
+requirements <- c("readxl","dplyr","reshape","ggplot2","caret","regclass","InformationValue","ISLR","lmtest","stats","epiDisplay","epicalc")
+#CRAN repository
+repos <- "http://cran.us.r-project.org"
+
+#install and load missing requirements
+for (pack in requirements){
+  if( !is.element(pack, .packages(all.available = TRUE)) ) {
+    #install.packages(pack, repos = repos)
+    install.packages(pack)
+  }
+  library(pack, character.only = TRUE)
+}
+```
+
+```{r constants}
+rm(list=ls())
+#Constants
+MWade = 135.13 # molecular weights for adenine in g/mol
+MWcre = 113.12 #molecular weights for creatinine in g/mol
+
+#Random number seed
+set.seed(10079)
+
+```
+
+```{r download}
+#get data
+#rawdata <- read.csv("newData.csv")
+data1 <- read.csv("RedCapUp2.csv")
+subset_data <- read.csv("RomanDataset.csv")
+#subset_data <- read_excel("RIC_AA_Combined_final_Creatinine_Normalized_adenine at nM vs mM.xlsx")
+rawdata<-merge(data1,subset_data,by="patientid")
+
+```
+
+```{r exclusioncriteria}
+#remove patients with no adenine values
+rawdata <- rawdata[!is.na(rawdata$log_adenine2), ]
+```
+
+# Display Adenine cutoff values between tertiles
+```{r partition}
+#Roman 
+rawdata$acr<-rawdata$albumin_creatinine_ratio
+#select normogroup
+normopats <- rawdata$acr <30
+micropats <- rawdata$acr >=30 & rawdata$acr <300
+
+#get ACR in units of mg/mmol (Dan)
+#rawdata$acr<-(rawdata$urine_albumin_v3y0/rawdata$urine_creatinine_v3y0)*1000/88.42
+#select normogroup
+#normopats <- rawdata$acr <3
+#micropats <- rawdata$acr >=3 & rawdata$acr <30
+print(paste("number of patients with normo-albuminuria = ", sum(normopats, na.rm = TRUE)))
+print(paste("number of patients with micro-albuminuria = ", sum(micropats, na.rm = TRUE)))
+```
+
+# get adenine tertiles cutoff values
+```{r adeninecutoff}
+quants <-quantile(rawdata$log_adenine2, na.rm = T, probs = seq(0, 1, by = 1/3))
+print(paste("tertile cutoffs in (nm/um)= ", paste(quants, collapse=", ")))
+#print(paste("tertile cutoffs in (mg/g)= ", paste(quants*MWcre/MWade, collapse=", ")))
+```
+
+```{r partitionwithtertile}
+T1pats <- rawdata$log_adenine2 >= quants[1] & rawdata$log_adenine2 < quants[2]
+T2pats <- rawdata$log_adenine2 >= quants[2] & rawdata$log_adenine2 < quants[3]
+T3pats <- rawdata$log_adenine2 >= quants[3]
+print(paste("Total number of patients ", sum(!is.na(rawdata$log_adenine2))))
+
+print(paste("number of patients in T1 ", sum(T1pats, na.rm = TRUE)))
+print(paste("number of patients in T2 ", sum(T2pats, na.rm = TRUE)))
+print(paste("number of patients in T3 ", sum(T3pats, na.rm = TRUE)))
+```
+
+```{r outcome40}
+#select eGFR
+egfrcols <- names(rawdata)[grep("egfr_cric_v", names(rawdata))]
+#loop over years and count events for each year
+for (year in 1:6){
+  #print(year)
+  #calculate 40% decline at each year
+  t1 <- rawdata[, egfrcols[year+1]]  #EGFR[,year]
+  t0 <- rawdata[, egfrcols[1]] #rawdata$egfr_cric_v3y0
+  t2 <- rawdata$sa_allc_cric_renal2_v3y0
+  
+  #rawdata[paste("outcome40",year, sep = "_")] = ((t1-t0)/t0 < -.40) | (t2==1)
+  rawdata[paste("outcome40",year, sep = "_")] =((t1-t0)/t0 < -.40) | ((t2==1) & year>= rawdata$sa_allc_cric_time_renal2_v3y0)
+  #rawdata[paste("outcome40",year, sep = "_")] =(t2==1)# ((t1-t0)/t0 < -.40) | (t5==1)
+}
+```
+
+# Adenine and clinical Variable preprocessing to apply glm 
+```{r predictor}
+#predictor is log2 adenine
+#rawdata$predictor<- log2(impute(rawdata$Adenine..nM.uM.))
+#rawdata$predictor<- log(rawdata$Adenine..nM.uM.+1,base=2)
+rawdata$predictor<-rawdata$log_adenine2
+
+#Clinical varible normalization based on z-score
+#rawdata$age<-scale(rawdata$age_integer_v3y0)
+#rawdata$hemoglobin<-scale(rawdata$hemoglobin_a1c_v3y0)
+#rawdata$map<-scale(rawdata$map_v3y0)
+#rawdata$bmi<-scale(rawdata$bmi_v3y0)
+rawdata$egfr<-scale(rawdata$egfr_cric_v3y0)
+#rawdata$logacr<-scale(log(rawdata$acr))
+```
+
+```{r BTest}
+pval_arr <- c()
+pval_norm<-c()
+pval_micro<-c()
+
+gain_arr<-c()
+testname<-c()
+testname_norm<-c()
+testname_micro<-c()
+pval_nm<-c()
+testname_nm<-c()
+```
+
+# Estimate outcome from year 1 to 6 together
+```{r Normal_outcome_commulative}
+#Extract time to events columns from rawdata
+outcomes<-names(rawdata)[grep("outcome",names(rawdata))]
+outcome<-c()
+#Loop over patients
+for (i in 1:dim(rawdata)[1]){
+  #commulative outcomes from year 1 to 6
+  outevent<-rawdata[outcomes[1:6]][i,]
+  outcome[i]<-sum(outevent,na.rm=TRUE)
+}
+rawdata$outcome<-outcome>0
+```
+
+```{r}
+rawdata <- within(rawdata, {
+    ## transplant (1) and death (2) are considered events, and marked 1
+    event <- as.numeric(outcome)
+    time<-sa_allc_cric_time_renal2_v3y0
+    ## Create a survival vector
+    surv <- Surv(time, event)
+})
+```
+
+# Full cohort 
+```{r}
+mod<-coxph(formula=Surv(rawdata$time, rawdata$outcome)~age+predictor+bmi+hemoglobin_a1c+map+egfr+log_acr, data = rawdata)
+print(mod)
+```
+
+```{r Normal_CP1}
+#define conditions like clinical parameters (CP) 
+CP<-c("age","bmi","hemoglobin_a1c","map","egfr","log_acr")
+#CP<-c("age","hemoglobin","map","bmi","egfr","logacr")
+
+#define conditions like clinical parameters (CP) 
+#CPAD<-c("predictor","age","hemoglobin","map","bmi","egfr","logacr")
+CPAD<-c("predictor","age","bmi","hemoglobin_a1c","map","egfr","log_acr")
+#Make a dataframe to hold results
+dfResults<-data.frame(matrix(nrow = 3, ncol = 6))
+colnames(dfResults)<-c("tertile","PPV","NPV","P_event","N_event","prevalence [%]")
+
+#Loop over tertile
+data<-cbind(rawdata["outcome"],rawdata[CP],rawdata["predictor"],rawdata["time"],rawdata["event"])
+
+#Normal patients idx
+idxN<-which(normopats)
+COVdataN<-data[idxN,]
+modN<-coxph(formula=Surv(COVdataN$time, COVdataN$event)~age+predictor+bmi+hemoglobin_a1c+map+egfr+log_acr, data = COVdataN)
+
+#Micro patients idx
+idxM<-which(micropats)
+COVdataM<-data[idxM,]
+modM<-coxph(formula=Surv(COVdataM$time, COVdataM$event)~age+predictor+bmi+hemoglobin_a1c+map+egfr+log_acr, data = COVdataM)
+
+#Normal and Micro patients idx
+idxNM<-which(normopats | micropats)
+COVdataNM<-data[idxNM,]
+modNM<-coxph(formula=Surv(COVdataNM$time, COVdataNM$event)~age+predictor+bmi+hemoglobin_a1c+map+egfr+log_acr, data = COVdataNM)
+```
+
+# Normal Group
+```{r NormalGro}
+print(modN)
+```
+# Micro Group
+```{r MicroGrop}
+print(modM)
+```
+
+# Normal+Micro Group
+```{r NM}
+print(modNM)
+```

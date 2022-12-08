@@ -1,0 +1,422 @@
+---
+title: "Cumulative outcomes with (1) Doubling of Serum creatinine and (2) Dialysis or Transplant and (3) Death (any case). Tertile with ACR group"
+author: "Daniel Montemayor and Rabiul Islam<br><small>Center for Renal Precision Medicine<br>University of Texas Health San Antonio School of Medicine</small>"
+date: "<small>`r Sys.Date()`</small>"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    number_sections: true
+    toc_float: 
+      collapsed: false
+    code_folding: hide
+    theme: cerulean
+---
+
+![Center for Renal Precision Medicine](https://dmontemayor.github.io/assets/Long_SOM/horizontal/JPG/UTHSA_Long-SOM_H_CMYK.jpg)
+
+# Brief
++Cumulative outcomes with Doubling of Serum creatinine
++Dialysis or Transplant 
++Death (any case) for normo, micro, and normo+micro groups  (for each year)
++ Partion by Adenine Tertiles (Individual cohorts) for NA, MA, and NA+MA groups.
++Count the Cumulative outcomes
+ 
+```{r requirements, message=FALSE, warning=FALSE}
+#Requirements
+requirements <- c("dplyr","reshape","ggplot2","tidyverse","rstatix","ggpubr")
+
+#CRAN repository
+repos <- "http://cran.us.r-project.org"
+
+#install and load missing requirements
+for (pack in requirements){
+  if( !is.element(pack, .packages(all.available = TRUE)) ) {
+    #install.packages(pack, repos = repos)
+    install.packages(pack)
+  }
+  library(pack, character.only = TRUE)
+}
+```
+
+```{r constants}
+#Constants
+rm(list=ls())
+MWade = 135.13 # molecular weights for adenine in g/mol
+MWcre = 113.12 #molecular weights for creatinine in g/mol
+
+#Random number seed
+set.seed(10079)
+
+```
+
+```{r download}
+#get data
+rawdata <- read.csv("RedCapUp2.csv")#, stringsAsFactors = TRUE)
+```
+
+# Adenine preprocess and log2 conversion
+```{r exclusioncriteria}
+#remove patients with no adenine values
+rawdata <- rawdata[!is.na(rawdata$Adenine..nM.uM.), ]
+
+impute<-function(x){
+  replace(x, x==0, min(x[x>0], na.rm = TRUE)/2)
+}
+
+#log2 adenine
+Temp<-impute(rawdata$Adenine..nM.uM.)
+rawdata$log_adenine2<- log(Temp+1, base = 2)
+```
+
+# Display ACR group
+```{r partition}
+#get ACR in units of mg/mmol
+rawdata$acr<-(rawdata$urine_albumin_v3y0/rawdata$urine_creatinine_v3y0)*1000/88.42
+
+#select normogroup
+normopats <- rawdata$acr <3
+micropats <- rawdata$acr >=3 & rawdata$acr <30
+print(paste("number of patients with normo-albuminuria = ", sum(normopats, na.rm = TRUE)))
+print(paste("number of patients with micro-albuminuria = ", sum(micropats, na.rm = TRUE)))
+```
+
+# Normal group tertiles
+```{r}
+#select normal group patients from adenine (rawdata$predictor)
+idx<-which(normopats)
+#keep normal data
+normalpatients<-rawdata[idx,]
+
+quants<-quantile(normalpatients$log_adenine2, na.rm=T, probs = seq(0,1, by=1/3))
+print(paste("tertile cutoffs in (nm/um) for normal group= ", paste(quants, collapse=", ")))
+
+T1patsnorm <- normalpatients$log_adenine2 >= quants[1] & normalpatients$log_adenine2 < quants[2]
+T2patsnorm <- normalpatients$log_adenine2 >= quants[2] & normalpatients$log_adenine2 < quants[3]
+T3patsnorm <- normalpatients$log_adenine2 >= quants[3]
+print(paste("Total number of patients on Normal group", sum(!is.na(normalpatients$log_adenine2))))
+
+print(paste("number of patients in T1 ", sum(T1patsnorm, na.rm = TRUE)))
+print(paste("number of patients in T2 ", sum(T2patsnorm, na.rm = TRUE)))
+print(paste("number of patients in T3 ", sum(T3patsnorm, na.rm = TRUE)))
+```
+
+# Normal Group: Cumulative outcomes
+```{r}
+#make a dataframe to hold event count
+df <- data.frame(matrix(nrow=10, ncol = 4))
+colnames(df) <- c("year", "normT1", "normT2", "normT3")
+
+#select eGFR
+creatcols <- names(normalpatients)[grep("creatinine_serum_v", names(normalpatients))]
+#EGFR<-rawdata%>%
+#loop over years and count events for each year
+for (year in 1:10){
+  #serum creat for each year
+  t1 <- normalpatients[, creatcols[year+1]] 
+  
+  #baseline serum creat
+  t0 <- normalpatients$creatinine_serum_v3y0
+  
+  #baseline eskd for Dial/trans and death
+  t2 <- normalpatients$sa_allc_esrd_v3y0
+  
+  #Doubling serum creat and make outcomes
+  #normalpatients$outcome = ((t1-t0)/t0>1) | ((t2==1 | t2==2) & (year>= normalpatients$sa_allc_time_esrd_v3y0))
+  
+  #normalpatients$outcome = ((t1-t0)/t0>1) | ((t2==1 | t2==2) & (year>= normalpatients$sa_allc_time_esrd_v3y0))
+  
+  #normalpatients$outcome = (year>= normalpatients$sa_allc_time_esrd_v3y0)
+  
+  normalpatients$outcome = ((t2==2) & (year>= normalpatients$sa_allc_time_esrd_v3y0))
+  
+  #Event counts from outcome
+  T1events<-sum(normalpatients$outcome[which(T1patsnorm)], na.rm=TRUE)
+  T2events<-sum(normalpatients$outcome[which(T2patsnorm)], na.rm=TRUE)
+  T3events<-sum(normalpatients$outcome[which(T3patsnorm)], na.rm=TRUE)
+  
+  
+  df$year[year] <- year
+  df$normT1[year] <- T1events
+  df$normT2[year] <- T2events
+  df$normT3[year] <- T3events
+}
+print(df)
+```
+
+```{r pecentageandcumulative}
+## The percentage estimated (each year events with each tertile/total number of events multiply by 100). After percentage estimation, we estimated cumulative ESKD
+#Estimate cumulative for T1, T2, and T3
+TalSample<-sum(df[2]+df[3]+df[4])
+#x<-(df[-1]/TalSample)*100
+x<-(df[-1]/(sum(!is.na(normalpatients$log_adenine2))))*100
+#print percentage
+#print(x)
+x<-cumsum(x)
+dfnew<-cbind(df[1],x)
+#print(dfnew)
+```
+## Cumulative sum of outcomes with (1) Doubling of Serum creatinine and (2) Dialysis or Transplant and (3) Death (any case).
+```{r bargraph3}
+Wide_data <- melt(dfnew, id.vars = "year")
+ggplot(Wide_data, aes(fill=variable, y=value, x=year)) + 
+  geom_bar(position="dodge", stat="identity")+labs(y="Cumulative outcomes (in %)", x="Year")
+```
+
+# Micro group tertiles
+```{r}
+#select normal group patients from adenine (rawdata$predictor)
+idx<-which(micropats)
+#keep normal data
+micropatients<-rawdata[idx,]
+
+quants<-quantile(micropatients$log_adenine2, na.rm=T, probs = seq(0,1, by=1/3))
+print(paste("tertile cutoffs in (nm/um) for Micro group= ", paste(quants, collapse=", ")))
+
+T1patsmicro <- micropatients$log_adenine2 >= quants[1] & micropatients$log_adenine2 < quants[2]
+T2patsmicro <- micropatients$log_adenine2 >= quants[2] & micropatients$log_adenine2 < quants[3]
+T3patsmicro <- micropatients$log_adenine2 >= quants[3]
+print(paste("Total number of patients on Micro group", sum(!is.na(micropatients$log_adenine2))))
+
+print(paste("number of patients in T1 ", sum(T1patsmicro, na.rm = TRUE)))
+print(paste("number of patients in T2 ", sum(T2patsmicro, na.rm = TRUE)))
+print(paste("number of patients in T3 ", sum(T3patsmicro, na.rm = TRUE)))
+```
+
+## Micro Group: Cumulative outcomes
+```{r}
+#make a dataframe to hold event count
+df <- data.frame(matrix(nrow=10, ncol = 4))
+colnames(df) <- c("year", "normT1", "normT2", "normT3")
+
+#select eGFR
+creatcols <- names(micropatients)[grep("creatinine_serum_v", names(micropatients))]
+#EGFR<-rawdata%>%
+#loop over years and count events for each year
+for (year in 1:10){
+  #serum creat for each year
+  t1 <- micropatients[, creatcols[year+1]] 
+  
+  #baseline serum creat
+  t0 <- micropatients$creatinine_serum_v3y0
+  
+  #baseline eskd for Dial/trans and death
+  t2 <- micropatients$sa_allc_esrd_v3y0
+  
+  #Doubling serum creat and make outcomes
+  #micropatients$outcome = ((t1-t0)/t0>1) | ((t2==1 | t2==2) & (year>= micropatients$sa_allc_time_esrd_v3y0))
+  
+  #micropatients$outcome = ((t1-t0)/t0>1)
+  
+  #micropatients$outcome = (year>= micropatients$sa_allc_time_esrd_v3y0)
+  
+  micropatients$outcome = ((t2==2) & (year>= micropatients$sa_allc_time_esrd_v3y0))
+  
+  #Event counts from outcome
+  T1events<-sum(micropatients$outcome[which(T1patsmicro )], na.rm=TRUE)
+  T2events<-sum(micropatients$outcome[which(T2patsmicro)], na.rm=TRUE)
+  T3events<-sum(micropatients$outcome[which(T3patsmicro)], na.rm=TRUE)
+  
+  #T1events <- sum(rawdata$outcome[T1pats & normopats], na.rm = TRUE)
+  #T2events <- sum(rawdata$outcome[T2pats & normopats], na.rm = TRUE)
+  #T3events <- sum(rawdata$outcome[T3pats & normopats], na.rm = TRUE)
+  
+  df$year[year] <- year
+  df$normT1[year] <- T1events
+  df$normT2[year] <- T2events
+  df$normT3[year] <- T3events
+}
+print(df)
+```
+
+```{r pecentageandcumulative10}
+## The percentage estimated (each year events with each tertile/total number of events multiply by 100). After percentage estimation, we estimated cumulative ESKD
+#Estimate cumulative for T1, T2, and T3
+TalSample<-sum(df[2]+df[3]+df[4])
+#x<-(df[-1]/TalSample)*100
+x<-(df[-1]/(sum(!is.na(micropatients$log_adenine2))))*100
+#print percentage
+#print(x)
+x<-cumsum(x)
+dfnew<-cbind(df[1],x)
+#print(dfnew)
+```
+## Cumulative sum of outcomes with (1) Doubling of Serum creatinine and (2) Dialysis or Transplant and (3) Death (any case).
+```{r bargraph1}
+Wide_data <- melt(dfnew, id.vars = "year")
+ggplot(Wide_data, aes(fill=variable, y=value, x=year)) + 
+  geom_bar(position="dodge", stat="identity")+labs(y="Cumulative outcomes (in %)", x="Year")
+```
+
+
+# Normo+Micro group tertiles
+```{r}
+#select normal group patients from adenine (rawdata$predictor)
+idx<-which(micropats | normopats)
+#keep normal data
+NMpatients<-rawdata[idx,]
+
+quants<-quantile(NMpatients$log_adenine2, na.rm=T, probs = seq(0,1, by=1/3))
+print(paste("tertile cutoffs in (nm/um) for Normo+Micro= ", paste(quants, collapse=", ")))
+
+T1patsNM <- NMpatients$log_adenine2 >= quants[1] & NMpatients$log_adenine2 < quants[2]
+T2patsNM <- NMpatients$log_adenine2 >= quants[2] & NMpatients$log_adenine2 < quants[3]
+T3patsNM <- NMpatients$log_adenine2 >= quants[3]
+print(paste("Total number of patients on Normo+Micro group", sum(!is.na(NMpatients$log_adenine2))))
+
+print(paste("number of patients in T1 ", sum(T1patsNM, na.rm = TRUE)))
+print(paste("number of patients in T2 ", sum(T2patsNM, na.rm = TRUE)))
+print(paste("number of patients in T3 ", sum(T3patsNM, na.rm = TRUE)))
+```
+
+## Normo+Micro Group: Cumulative outcomes
+```{r}
+#make a dataframe to hold event count
+df <- data.frame(matrix(nrow=10, ncol = 4))
+colnames(df) <- c("year", "normT1", "normT2", "normT3")
+
+#select eGFR
+creatcols <- names(NMpatients)[grep("creatinine_serum_v", names(NMpatients))]
+#EGFR<-rawdata%>%
+#loop over years and count events for each year
+for (year in 1:10){
+  #serum creat for each year
+  t1 <- NMpatients[, creatcols[year+1]] 
+  
+  #baseline serum creat
+  t0 <- NMpatients$creatinine_serum_v3y0
+  
+  #baseline eskd for Dial/trans and death
+  t2 <- NMpatients$sa_allc_esrd_v3y0
+  
+  #Doubling serum creat and make outcomes
+  #NMpatients$outcome = ((t1-t0)/t0>1) | ((t2==1 | t2==2) & (year>= NMpatients$sa_allc_time_esrd_v3y0))
+  
+  
+  NMpatients$outcome = ((t1-t0)/t0>1)
+  
+  #NMpatients$outcome = (year>= NMpatients$sa_allc_time_esrd_v3y0)
+  
+  
+  #NMpatients$outcome = ((t2==2) & (year>= NMpatients$sa_allc_time_esrd_v3y0))
+  
+  #Event counts from outcome
+  T1events<-sum(NMpatients$outcome[which(T1patsNM )], na.rm=TRUE)
+  T2events<-sum(NMpatients$outcome[which(T2patsNM)], na.rm=TRUE)
+  T3events<-sum(NMpatients$outcome[which(T3patsNM)], na.rm=TRUE)
+  
+  #T1events <- sum(rawdata$outcome[T1pats & normopats], na.rm = TRUE)
+  #T2events <- sum(rawdata$outcome[T2pats & normopats], na.rm = TRUE)
+  #T3events <- sum(rawdata$outcome[T3pats & normopats], na.rm = TRUE)
+  
+  df$year[year] <- year
+  df$normT1[year] <- T1events
+  df$normT2[year] <- T2events
+  df$normT3[year] <- T3events
+}
+print(df)
+```
+
+```{r pecentageandcumulati}
+## The percentage estimated (each year events with each tertile/total number of events multiply by 100). After percentage estimation, we estimated cumulative ESKD
+#Estimate cumulative for T1, T2, and T3
+TalSample<-sum(df[2]+df[3]+df[4])
+#x<-(df[-1]/TalSample)*100
+x<-(df[-1]/(sum(!is.na(NMpatients$log_adenine2))))*100
+#print percentage
+#print(x)
+x<-cumsum(x)
+dfnew<-cbind(df[1],x)
+#print(dfnew)
+```
+## Cumulative sum of outcomes with (1) Doubling of Serum creatinine and (2) Dialysis or Transplant and (3) Death (any case).
+```{r bargraph4}
+Wide_data <- melt(dfnew, id.vars = "year")
+ggplot(Wide_data, aes(fill=variable, y=value, x=year)) + 
+  geom_bar(position="dodge", stat="identity")+labs(y="Cumulative outcomes (in %)", x="Year")
+```
+
+
+
+
+
+# eGFR decline (40, 50, and 57%)
+
+## Normo+Micro group tertiles
+```{r}
+#select normal group patients from adenine (rawdata$predictor)
+idx<-which(micropats | normopats)
+#keep normal data
+NMpatients<-rawdata[idx,]
+
+quants<-quantile(NMpatients$log_adenine2, na.rm=T, probs = seq(0,1, by=1/3))
+print(paste("tertile cutoffs in (nm/um) for Normo+Micro= ", paste(quants, collapse=", ")))
+
+T1patsNM <- NMpatients$log_adenine2 >= quants[1] & NMpatients$log_adenine2 < quants[2]
+T2patsNM <- NMpatients$log_adenine2 >= quants[2] & NMpatients$log_adenine2 < quants[3]
+T3patsNM <- NMpatients$log_adenine2 >= quants[3]
+print(paste("Total number of patients on Normo+Micro", sum(!is.na(NMpatients$log_adenine2))))
+
+print(paste("number of patients in T1 ", sum(T1patsNM, na.rm = TRUE)))
+print(paste("number of patients in T2 ", sum(T2patsNM, na.rm = TRUE)))
+print(paste("number of patients in T3 ", sum(T3patsNM, na.rm = TRUE)))
+```
+
+
+## Normo+Micro Group: Cumulative outcomes
+```{r}
+#make a dataframe to hold event count
+df <- data.frame(matrix(nrow=10, ncol = 4))
+colnames(df) <- c("year", "normT1", "normT2", "normT3")
+
+#select eGFR
+creatcols <- names(NMpatients)[grep("egfr_cric_v", names(NMpatients))]
+#EGFR<-rawdata%>%
+#loop over years and count events for each year
+for (year in 1:10){
+  #serum creat for each year
+  t1 <- NMpatients[, creatcols[year+1]] 
+  
+  #baseline serum creat
+  t0 <- NMpatients$egfr_cric_v3y0
+  
+  #baseline eskd for Dial/trans and death
+  t2 <- NMpatients$sa_allc_cric_renal2_v3y0
+  
+  #egfr decline 
+  #NMpatients$outcome=((t1-t0)/t0 < -.40) | ((t2==1) & year>= NMpatients$sa_allc_cric_time_renal2_v3y0)
+  
+  NMpatients$outcome = ((t1-t0)/t0 < -.57) #| (year>= NMpatients$sa_allc_cric_time_renal2_v3y0)
+  
+  #Event counts from outcome
+  T1events<-sum(NMpatients$outcome[which(T1patsNM )], na.rm=TRUE)
+  T2events<-sum(NMpatients$outcome[which(T2patsNM)], na.rm=TRUE)
+  T3events<-sum(NMpatients$outcome[which(T3patsNM)], na.rm=TRUE)
+  
+  
+  df$year[year] <- year
+  df$normT1[year] <- T1events
+  df$normT2[year] <- T2events
+  df$normT3[year] <- T3events
+}
+print(df)
+```
+
+```{r pecentageandcumulativ}
+## The percentage estimated (each year events with each tertile/total number of events multiply by 100). After percentage estimation, we estimated cumulative ESKD
+#Estimate cumulative for T1, T2, and T3
+TalSample<-sum(df[2]+df[3]+df[4])
+#x<-(df[-1]/TalSample)*100
+x<-(df[-1]/(sum(!is.na(NMpatients$log_adenine2))))*100
+#print percentage
+#print(x)
+x<-cumsum(x)
+dfnew<-cbind(df[1],x)
+#print(dfnew)
+```
+## Cumulative sum of outcomes with (1) efgr decline.
+```{r bargraph2}
+Wide_data <- melt(dfnew, id.vars = "year")
+ggplot(Wide_data, aes(fill=variable, y=value, x=year)) + 
+  geom_bar(position="dodge", stat="identity")+labs(y="Cumulative outcomes (in %)", x="Year")
+```

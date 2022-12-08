@@ -1,0 +1,365 @@
+---
+title: "Count 40% egfr decline events"
+author: "Daniel Montemayor and Rabiul Islam<br><small>Center for Renal Precision Medicine<br>University of Texas Health San Antonio School of Medicine</small>"
+date: "<small>`r Sys.Date()`</small>"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    number_sections: true
+    toc_float: 
+      collapsed: false
+    code_folding: hide
+    theme: cerulean
+---
+
+![Center for Renal Precision Medicine](https://dmontemayor.github.io/assets/Long_SOM/horizontal/JPG/UTHSA_Long-SOM_H_CMYK.jpg)
+
+# Brief
++ outcome is 40% eGFR decline wrt baseline at 1 and 2 year
++ predictoir is Adeinine bin at 100mg/g or at the T1-T2 cutoff
++ With and without adjustment for clinical variables.
++ In groups fullcohort, NA, MA, and MA+
+
+```{r requirements, message=FALSE, warning=FALSE}
+#Requirements
+requirements <- c("dplyr")
+
+#CRAN repository
+repos <- "http://cran.us.r-project.org"
+
+#install and load missing requirements
+for (pack in requirements){
+  if( !is.element(pack, .packages(all.available = TRUE)) ) {
+    #install.packages(pack, repos = repos)
+    install.packages(pack)
+  }
+  library(pack, character.only = TRUE)
+}
+```
+
+```{r constants}
+#Constants
+MWade = 135.13 # molecular weights for adenine in g/mol
+MWcre = 113.12 #molecular weights for creatinine in g/mol
+
+#Random number seed
+set.seed(10079)
+
+```
+
+```{r download}
+#get data
+rawdata <- read.csv("RedCapUp2.csv")#, stringsAsFactors = TRUE)
+#aadata <- read.csv("CRIC_AA_Combined_final_adding_pipecolate_Creatinine_Normalized.csv")
+```
+
+# Display Adenine cutoff values between tertiles
+```{r partition}
+#get ACR in units of mg/mmol
+rawdata$acr<-(rawdata$urine_albumin_v3y0/rawdata$urine_creatinine_v3y0)*1000/88.42
+
+#select normogroup
+normopats <- which(rawdata$acr <3)
+micropats <- which(rawdata$acr >=3 &rawdata$acr <30)
+macropats <- which(rawdata$acr >=30)
+print(paste("number of patients with normo-albuminuria = ", length(normopats)))
+print(paste("number of patients with micro-albuminuria = ", length(micropats)))
+print(paste("number of patients with macro-albuminuria = ", length(macropats)))
+
+#get adenine tertiles cutoff values
+quants <- quantile(rawdata$Adenine..nM.uM., c(0,1/3,2/3,1), na.rm = TRUE)
+print(paste("tertile cutoffs in (nm/um)= ", paste(quants, collapse=", ")))
+print(paste("tertile cutoffs in (mg/g)= ", paste(quants*MWcre/MWade, collapse=", ")))
+
+```
+
+```{r outcome1}
+#calculate 40% decline at year 1
+t1 <- rawdata$egfr_cric_v5y1
+t0 <- rawdata$egfr_cric_v3y0
+rawdata$decline40pct.yr1 = (t1-t0)/t0 < -.40
+nevent <- sum(rawdata$decline40pct.yr1, na.rm = TRUE)
+print(paste("number of events in year 1 = ",nevent))
+
+```
+```{r outcome2}
+#calculate 40% decline at year 2
+t1 <- rawdata$egfr_cric_v7y2
+t0 <- rawdata$egfr_cric_v3y0
+rawdata$decline40pct.yr2 = (t1-t0)/t0 < -.40
+nevent <- sum(rawdata$decline40pct.yr2, na.rm = TRUE)
+print(paste("number of events in year 2 = ",nevent))
+```
+
+```{r outcome3}
+#calculate 40% decline at year 3
+t1 <- rawdata$egfr_cric_v9y3
+t0 <- rawdata$egfr_cric_v3y0
+rawdata$decline40pct.yr3 = (t1-t0)/t0 < -.40
+nevent <- sum(rawdata$decline40pct.yr3, na.rm = TRUE)
+print(paste("number of events in year 3 = ",nevent))
+```
+
+```{r predictor}
+#rawdata$predictor <- rawdata$Adenine..nM.uM.>quants[2]
+rawdata$predictor <- rawdata$Adenine..nM.uM.>.1
+#rawdata$predictor <- rawdata$Adenine..nM.uM.>quants[3]
+#rawdata$predictor[rawdata$Adenine..nM.uM.>quants[2] & rawdata$Adenine..nM.uM.<=quants[3]] <- NA
+
+
+nhighAdenine <- sum(rawdata$predictor, na.rm=TRUE)
+nlowAdenine <- sum( !rawdata$predictor, na.rm=TRUE)
+print(paste("number of patient with low adenine  = ", nlowAdenine))
+print(paste("number of patient with High adenine  = ", nhighAdenine))
+```
+
+```{r normalize}
+rawdata$age_integer_v3y0 <- scale(rawdata$age_integer_v3y0)
+rawdata$hemoglobin_a1c_v3y0<- scale(rawdata$hemoglobin_a1c_v3y0)
+rawdata$map_v3y0<- scale(rawdata$map_v3y0)
+rawdata$bmi_v3y0<- scale(rawdata$bmi_v3y0)
+rawdata$egfr_cric_v3y0<- scale(rawdata$egfr_cric_v3y0)
+rawdata$acr <- scale(log2(rawdata$acr))
+```
+
+# Use 100 g/g Adenine to define High and low groups.
+
+# Full Cohort
+
+## Association of High Adenine  with 40% eGFR decline at 1 year
+```{r model1_full}
+mod1 <- glm(decline40pct.yr1~predictor, data = rawdata, family = "binomial")
+summary(mod1)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 2 year
+```{r model2_full}
+mod2 <- glm(decline40pct.yr2~predictor, data = rawdata, family = "binomial")
+summary(mod2)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 3 year
+```{r model3_full}
+mod3 <- glm(decline40pct.yr3~predictor, data = rawdata, family = "binomial")
+summary(mod3)
+```
+
+
+## Association of High Adenine  with 40% eGFR decline at 1 year with adj for clinical variables
+```{r model1adj_full}
+mod1adj <- glm(decline40pct.yr1~predictor+
+                 age_integer_v3y0+
+                 hemoglobin_a1c_v3y0+
+                 map_v3y0+
+                 bmi_v3y0+
+                 egfr_cric_v3y0+
+                 acr
+               , data = rawdata, family = "binomial")
+summary(mod1adj)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 2 year with adj for clinical variables
+```{r model2adj_full}
+mod2adj <- glm(decline40pct.yr2~predictor+
+                 age_integer_v3y0+
+                 hemoglobin_a1c_v3y0+
+                 map_v3y0+
+                 bmi_v3y0+
+                 egfr_cric_v3y0+
+                 acr
+               , data = rawdata, family = "binomial")
+summary(mod2adj)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 3 year with adj for clinical variables
+```{r model3adj_full}
+mod3adj <- glm(decline40pct.yr3~predictor+
+                 age_integer_v3y0+
+                 hemoglobin_a1c_v3y0+
+                 map_v3y0+
+                 bmi_v3y0+
+                 egfr_cric_v3y0+
+                 acr
+               , data = rawdata, family = "binomial")
+summary(mod3adj)
+```
+
+# Normo-Albuminuria
+
+## Association of High Adenine  with 40% eGFR decline at 1 year
+```{r model1_normo}
+mod1 <- glm(decline40pct.yr1~predictor, data = rawdata[normopats,], family = "binomial")
+summary(mod1)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 2 year
+```{r model2_normo}
+mod2 <- glm(decline40pct.yr2~predictor, data = rawdata[normopats,], family = "binomial")
+summary(mod2)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 3 year
+```{r model3_normo}
+mod3 <- glm(decline40pct.yr3~predictor, data = rawdata[normopats,], family = "binomial")
+summary(mod3)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 1 year with adj for clinical variables
+```{r model1adj_normo}
+mod1adj <- glm(decline40pct.yr1~predictor+
+                 age_integer_v3y0+
+                 hemoglobin_a1c_v3y0+
+                 map_v3y0+
+                 bmi_v3y0+
+                 egfr_cric_v3y0+
+                 acr
+               , data = rawdata[normopats,], family = "binomial")
+summary(mod1adj)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 2 year with adj for clinical variables
+```{r model2adj_normo}
+mod2adj <- glm(decline40pct.yr2~predictor+
+                 age_integer_v3y0+
+                 hemoglobin_a1c_v3y0+
+                 map_v3y0+
+                 bmi_v3y0+
+                 egfr_cric_v3y0+
+                 acr
+               , data = rawdata[normopats,], family = "binomial")
+summary(mod2adj)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 3 year with adj for clinical variables
+
+```{r model3adj_normo}
+mod3adj <- glm(decline40pct.yr3~predictor+
+                 age_integer_v3y0+
+                 hemoglobin_a1c_v3y0+
+                 map_v3y0+
+                 bmi_v3y0+
+                 egfr_cric_v3y0+
+                 acr
+               , data = rawdata[normopats,], family = "binomial")
+summary(mod3adj)
+```
+
+# Micro-Albuminuria
+
+## Association of High Adenine  with 40% eGFR decline at 1 year
+```{r model1_micro}
+mod1 <- glm(decline40pct.yr1~predictor, data = rawdata[micropats,], family = "binomial")
+summary(mod1)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 2 year
+```{r model2_micro}
+mod2 <- glm(decline40pct.yr2~predictor, data = rawdata[micropats,], family = "binomial")
+summary(mod2)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 3 year
+```{r model3_micro}
+mod3 <- glm(decline40pct.yr3~predictor, data = rawdata[micropats,], family = "binomial")
+summary(mod3)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 1 year with adj for clinical variables
+```{r model1adj_micro}
+mod1adj <- glm(decline40pct.yr1~predictor+
+                 age_integer_v3y0+
+                 hemoglobin_a1c_v3y0+
+                 map_v3y0+
+                 bmi_v3y0+
+                 egfr_cric_v3y0+
+                 acr
+               , data = rawdata[micropats,], family = "binomial")
+summary(mod1adj)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 2 year with adj for clinical variables
+```{r model2adj_micro}
+mod2adj <- glm(decline40pct.yr2~predictor+
+                 age_integer_v3y0+
+                 hemoglobin_a1c_v3y0+
+                 map_v3y0+
+                 bmi_v3y0+
+                 egfr_cric_v3y0+
+                 acr
+               , data = rawdata[micropats,], family = "binomial")
+summary(mod2adj)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 3 year with adj for clinical variables
+```{r model3adj_micro}
+mod3adj <- glm(decline40pct.yr3~predictor+
+                 age_integer_v3y0+
+                 hemoglobin_a1c_v3y0+
+                 map_v3y0+
+                 bmi_v3y0+
+                 egfr_cric_v3y0+
+                 acr
+               , data = rawdata[micropats,], family = "binomial")
+summary(mod3adj)
+```
+
+# Macro-Albuminuria
+
+## Association of High Adenine  with 40% eGFR decline at 1 year
+```{r model1_macro}
+mod1 <- glm(decline40pct.yr1~predictor, data = rawdata[macropats,], family = "binomial")
+summary(mod1)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 2 year
+```{r model2_macro}
+mod2 <- glm(decline40pct.yr2~predictor, data = rawdata[macropats,], family = "binomial")
+summary(mod2)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 3 year
+```{r model3_macro}
+mod3 <- glm(decline40pct.yr3~predictor, data = rawdata[macropats,], family = "binomial")
+summary(mod3)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 1 year with adj for clinical variables
+```{r model1adj_macro}
+mod1adj <- glm(decline40pct.yr1~predictor+
+                 age_integer_v3y0+
+                 hemoglobin_a1c_v3y0+
+                 map_v3y0+
+                 bmi_v3y0+
+                 egfr_cric_v3y0+
+                 acr
+               , data = rawdata[macropats,], family = "binomial")
+summary(mod1adj)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 2 year with adj for clinical variables
+```{r model2adj_macro}
+mod2adj <- glm(decline40pct.yr2~predictor+
+                 age_integer_v3y0+
+                 hemoglobin_a1c_v3y0+
+                 map_v3y0+
+                 bmi_v3y0+
+                 egfr_cric_v3y0+
+                 acr
+               , data = rawdata[macropats,], family = "binomial")
+summary(mod2adj)
+```
+
+## Association of High Adenine  with 40% eGFR decline at 3 year with adj for clinical variables
+```{r model3adj_macro}
+mod3adj <- glm(decline40pct.yr3~predictor+
+                 age_integer_v3y0+
+                 hemoglobin_a1c_v3y0+
+                 map_v3y0+
+                 bmi_v3y0+
+                 egfr_cric_v3y0+
+                 acr
+               , data = rawdata[macropats,], family = "binomial")
+summary(mod3adj)
+```
+

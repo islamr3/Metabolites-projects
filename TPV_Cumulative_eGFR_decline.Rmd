@@ -1,0 +1,618 @@
+---
+title: ' PPV and NPV with the eGFR 40% decline at end of 6y for each NA and MA group
+  and also combined'
+author: Daniel Montemayor and Rabiul Islam<br><small>Center for Renal Precision Medicine<br>University
+  of Texas Health San Antonio School of Medicine</small>
+date: "<small>`r Sys.Date()`</small>"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    number_sections: yes
+    toc_float:
+      collapsed: no
+    code_folding: hide
+    theme: cerulean
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+  word_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+![Center for Renal Precision Medicine](https://dmontemayor.github.io/assets/Long_SOM/horizontal/JPG/UTHSA_Long-SOM_H_CMYK.jpg)
+
+# Brief
++PPV and NPV with eGFR decline of 40% in each of the bins for the normo, micro, and normal+Micro goup
++ pertition by Adenine Tertiles for NA, MA, and NA+MA groups.
++estimate PPV and NPV wrt years for each teritle 
++Positive event and negative events were estimate by removing the NAN value with patients
++prevalence rate (%)=(positive events/positive events+negative events)x100]: link: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4022000/
+ 
+ 
+ ```{r}
+knitr::opts_chunk$set(message = FALSE, warning=FALSE)
+```
+ 
+```{r requirements, message=FALSE, warning=FALSE}
+#Requirements
+requirements <- c("dplyr","reshape","ggplot2","caret","regclass","InformationValue","ISLR")
+
+#CRAN repository
+repos <- "http://cran.us.r-project.org"
+
+#install and load missing requirements
+for (pack in requirements){
+  if( !is.element(pack, .packages(all.available = TRUE)) ) {
+    #install.packages(pack, repos = repos)
+    install.packages(pack)
+  }
+  library(pack, character.only = TRUE)
+}
+```
+
+```{r constants}
+rm(list=ls())
+#Constants
+MWade = 135.13 # molecular weights for adenine in g/mol
+MWcre = 113.12 #molecular weights for creatinine in g/mol
+
+#Random number seed
+set.seed(10079)
+
+```
+
+```{r download}
+#get data
+rawdata <- read.csv("RedCapUp2.csv")
+```
+
+```{r exclusioncriteria}
+#remove patients with no adenine values
+rawdata <- rawdata[!is.na(rawdata$Adenine..nM.uM.), ]
+```
+
+# Display Adenine cutoff values between tertiles
+```{r partition}
+#get ACR in units of mg/mmol
+rawdata$acr<-(rawdata$urine_albumin_v3y0/rawdata$urine_creatinine_v3y0)*1000/88.42
+
+#select normogroup
+normopats <- rawdata$acr <3
+micropats <- rawdata$acr >=3 & rawdata$acr <30
+print(paste("number of patients with normo-albuminuria = ", sum(normopats, na.rm = TRUE)))
+print(paste("number of patients with micro-albuminuria = ", sum(micropats, na.rm = TRUE)))
+```
+
+# get adenine tertiles cutoff values
+```{r adeninecutoff}
+quants <- quantile(rawdata$Adenine..nM.uM., c(0,1/3,2/3,1), na.rm = TRUE)
+print(paste("tertile cutoffs in (nm/um)= ", paste(quants, collapse=", ")))
+print(paste("tertile cutoffs in (mg/g)= ", paste(quants*MWcre/MWade, collapse=", ")))
+```
+
+```{r partitionwithtertile}
+T1pats <- rawdata$Adenine..nM.uM. >= quants[1] & rawdata$Adenine..nM.uM. < quants[2]
+T2pats <- rawdata$Adenine..nM.uM. >= quants[2] & rawdata$Adenine..nM.uM. < quants[3]
+T3pats <- rawdata$Adenine..nM.uM. >= quants[3]
+print(paste("Total number of patients ", sum(!is.na(rawdata$Adenine..nM.uM.))))
+
+print(paste("number of patients in T1 ", sum(T1pats, na.rm = TRUE)))
+print(paste("number of patients in T2 ", sum(T2pats, na.rm = TRUE)))
+print(paste("number of patients in T3 ", sum(T3pats, na.rm = TRUE)))
+```
+
+```{r outcome40}
+#select eGFR
+egfrcols <- names(rawdata)[grep("egfr_cric_v", names(rawdata))]
+#loop over years and count events for each year
+for (year in 1:7){
+  #print(year)
+  #calculate 40% decline at each year
+  t1 <- rawdata[, egfrcols[year+1]]  #EGFR[,year]
+  t0 <- rawdata[, egfrcols[1]] #rawdata$egfr_cric_v3y0
+  rawdata[paste("outcome40",year, sep = "_")] = ((t1-t0)/t0 < -.40)   #| (t2==1)
+}
+```
+
+# Adenine and clinical Variable preprocessing to apply glm 
+```{r predictor}
+impute<-function(x){
+  replace(x, x==0, min(x[x>0], na.rm = TRUE)/2)
+}
+#predictor is log2 adenine
+rawdata$predictor<- log2(impute(rawdata$Adenine..nM.uM.))
+
+#Clinical varible normalization based on z-score
+rawdata$age<-scale(rawdata$age_integer_v3y0)
+rawdata$hemoglobin<-scale(rawdata$hemoglobin_a1c_v3y0)
+rawdata$map<-scale(rawdata$map_v3y0)
+rawdata$bmi<-scale(rawdata$bmi_v3y0)
+rawdata$egfr<-scale(rawdata$egfr_ckd_epi_v3y0)
+rawdata$logacr<-scale(log2(rawdata$acr))
+```
+
+# Normal Group
+
+## Clinical parameter (CP): Positive Predictive value and Negative Predictive value for each year (1 to 6)
+```{r Normal_CP}
+#define conditions like clinical parameters (CP) 
+CP<-c("age","hemoglobin","map","bmi","egfr","logacr")
+
+#make a dataframe to hold results for each year and group
+dfResults<-data.frame(matrix(nrow=6, ncol = 7))
+colnames(dfResults)<-c("tertile","year","PPV","NPV","P_event","N_event","prevalence [%]")
+
+
+#Extract time to events columns from rawdata
+outcomes<-names(rawdata)[grep("outcome",names(rawdata))]
+#cbind q1, q2, and q3
+Qdata<-cbind(T1pats,T2pats,T3pats)
+Q<-c("T1pats","T2pats","T3pats")
+
+#Loop over tertile
+for (j in 1:3){
+  #Loop over year
+  for (i in 1:6){
+    data<-cbind(rawdata[outcomes[i]],rawdata[CP])
+    TerPats<-Qdata[,Q[j]]
+    idx<-which(TerPats & normopats)
+    COVdata<-na.omit(data[idx,])
+    event<-sum(data[outcomes[i]][idx,],na.rm = TRUE)
+    event_no<-sum(!data[outcomes[i]][idx,],na.rm = TRUE)
+    if(event!=0){
+    #Define formula and training the glm model
+    mod_formula <- as.formula(paste(outcomes[i],paste(CP,collapse = "+"),sep="~"))
+    mod <- glm(formula = mod_formula, family = binomial, data = COVdata)
+  
+  
+    ###################Make confusion matrix from glm model############
+    #use model to predict probability of default
+    pred<- predict(mod, data = COVdata, type="response")
+    #convert defaults from "Yes" and "No" to 1's and 0's
+    ActualLabel <- ifelse(COVdata[outcomes[i]]=="TRUE", 1, 0)
+    optimal <- optimalCutoff(ActualLabel, pred)[1]
+    #create confusion matrix
+    r=confusionMatrix(ActualLabel, pred,threshold = optimal)
+    r
+    #rows are predicted and culumns are actual
+    TN=r[1,1]
+    FN=r[1,2]
+    FP=r[2,1]
+    TP=r[2,2]
+    
+    PPV1=TP/(TP+FP)
+    NPV1=TN/(TN+FN)
+  
+    ################Book keeping column#################
+    #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<-i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-round(PPV1,2)
+    dfResults[i,"NPV"]<-round(NPV1,2)
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }else{
+     #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<- i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-0
+    dfResults[i,"NPV"]<-0
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }
+
+  }
+  print(dfResults)
+}
+```
+
+## Clinical parameter and Adenine (CP+AD): Positive Predictive value and Negative Predictive value for each year (1 to 6)
+```{r Normal_PPVwithTERTILE}
+#define conditions like clinical parameters (CP) 
+CP<-c("predictor","age","hemoglobin","map","bmi","egfr","logacr")
+
+#make a dataframe to hold results for each year and group
+dfResults<-data.frame(matrix(nrow=6, ncol = 7))
+colnames(dfResults)<-c("tertile","year","PPV","NPV","P_event","N_event","prevalence [%]")
+
+
+#Extract time to events columns from rawdata
+outcomes<-names(rawdata)[grep("outcome",names(rawdata))]
+#cbind q1, q2, and q3
+Qdata<-cbind(T1pats,T2pats,T3pats)
+Q<-c("T1pats","T2pats","T3pats")
+
+#Loop over tertile
+for (j in 1:3){
+  #Loop over year
+  for (i in 1:6){
+    data<-cbind(rawdata[outcomes[i]],rawdata[CP])
+    TerPats<-Qdata[,Q[j]]
+    idx<-which(TerPats & normopats)
+    COVdata<-na.omit(data[idx,])
+    event<-sum(data[outcomes[i]][idx,],na.rm = TRUE)
+    event_no<-sum(!data[outcomes[i]][idx,],na.rm = TRUE)
+    if(event!=0){
+    #Define formula and training the glm model
+    mod_formula <- as.formula(paste(outcomes[i],paste(CP,collapse = "+"),sep="~"))
+    mod <- glm(formula = mod_formula, family = binomial, data = COVdata)
+  
+  
+    ###################Make confusion matrix from glm model############
+    #use model to predict probability of default
+    pred<- predict(mod, data = COVdata, type="response")
+    #convert defaults from "Yes" and "No" to 1's and 0's
+    ActualLabel <- ifelse(COVdata[outcomes[i]]=="TRUE", 1, 0)
+    optimal <- optimalCutoff(ActualLabel, pred)[1]
+    #create confusion matrix
+    r=confusionMatrix(ActualLabel, pred,threshold = optimal)
+  
+    #True posive value and Negative Predictive value value
+    TN=r[1,1]
+    FN=r[1,2]
+    FP=r[2,1]
+    TP=r[2,2]
+    
+    PPV1=TP/(TP+FP)
+    NPV1=TN/(TN+FN)
+  
+    ################Book keeping column#################
+    #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<-i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-round(PPV1,2)
+    dfResults[i,"NPV"]<-round(NPV1,2)
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no  
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }else{
+     #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<- i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-0
+    dfResults[i,"NPV"]<-0
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no  
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }
+
+  }
+  print(dfResults)
+}
+```
+
+
+
+# Micro group
+
+## Clinical parameter (CP): Positive Predictive value and Negative Predictive value for each year (1 to 6)
+```{r Micro_CP}
+#define conditions like clinical parameters (CP) 
+CP<-c("age","hemoglobin","map","bmi","egfr","logacr")
+
+#make a dataframe to hold results for each year and group
+dfResults<-data.frame(matrix(nrow=6, ncol = 7))
+colnames(dfResults)<-c("tertile","year","PPV","NPV","P_event","N_event","prevalence [%]")
+
+
+#Extract time to events columns from rawdata
+outcomes<-names(rawdata)[grep("outcome",names(rawdata))]
+#cbind q1, q2, and q3
+Qdata<-cbind(T1pats,T2pats,T3pats)
+Q<-c("T1pats","T2pats","T3pats")
+
+#Loop over tertile
+for (j in 1:3){
+  #Loop over year
+  for (i in 1:6){
+    data<-cbind(rawdata[outcomes[i]],rawdata[CP])
+    TerPats<-Qdata[,Q[j]]
+    idx<-which(TerPats & micropats)
+    COVdata<-na.omit(data[idx,])
+    event<-sum(data[outcomes[i]][idx,],na.rm = TRUE)
+    event_no<-sum(!data[outcomes[i]][idx,],na.rm = TRUE)
+    if(event!=0){
+    #Define formula and training the glm model
+    mod_formula <- as.formula(paste(outcomes[i],paste(CP,collapse = "+"),sep="~"))
+    mod <- glm(formula = mod_formula, family = binomial, data = COVdata)
+  
+  
+    ###################Make confusion matrix from glm model############
+    #use model to predict probability of default
+    pred<- predict(mod, data = COVdata, type="response")
+    #convert defaults from "Yes" and "No" to 1's and 0's
+    ActualLabel <- ifelse(COVdata[outcomes[i]]=="TRUE", 1, 0)
+    optimal <- optimalCutoff(ActualLabel, pred)[1]
+    #create confusion matrix
+    r=confusionMatrix(ActualLabel, pred,threshold = optimal)
+  
+    #True posive value and Negative Predictive value value
+    TN=r[1,1]
+    FN=r[1,2]
+    FP=r[2,1]
+    TP=r[2,2]
+    
+    PPV1=TP/(TP+FP)
+    NPV1=TN/(TN+FN)
+    ################Book keeping column#################
+    #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<-i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-round(PPV1,2)
+    dfResults[i,"NPV"]<-round(NPV1,2)
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no  
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }else{
+     #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<- i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-0
+    dfResults[i,"NPV"]<-0
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no 
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }
+
+  }
+  print(dfResults)
+}
+```
+
+
+## Clinical parameter and Adenine (CP+AD): Positive Predictive value and Negative Predictive value for each year (1 to 6)
+```{r Micro_PPVwithTERTILE}
+#define conditions like clinical parameters (CP) 
+CP<-c("predictor","age","hemoglobin","map","bmi","egfr","logacr")
+
+#make a dataframe to hold results for each year and group
+dfResults<-data.frame(matrix(nrow=6, ncol = 7))
+colnames(dfResults)<-c("tertile","year","PPV","NPV","P_event","N_event","prevalence [%]")
+
+
+#Extract time to events columns from rawdata
+outcomes<-names(rawdata)[grep("outcome",names(rawdata))]
+#cbind q1, q2, and q3
+Qdata<-cbind(T1pats,T2pats,T3pats)
+Q<-c("T1pats","T2pats","T3pats")
+
+#Loop over tertile
+for (j in 1:3){
+  #Loop over year
+  for (i in 1:6){
+    data<-cbind(rawdata[outcomes[i]],rawdata[CP])
+    TerPats<-Qdata[,Q[j]]
+    idx<-which(TerPats & micropats)
+    COVdata<-na.omit(data[idx,])
+    event<-sum(data[outcomes[i]][idx,],na.rm = TRUE)
+    event_no<-sum(!data[outcomes[i]][idx,],na.rm = TRUE)
+    if(event!=0){
+    #Define formula and training the glm model
+    mod_formula <- as.formula(paste(outcomes[i],paste(CP,collapse = "+"),sep="~"))
+    mod <- glm(formula = mod_formula, family = binomial, data = COVdata)
+  
+  
+    ###################Make confusion matrix from glm model############
+    #use model to predict probability of default
+    pred<- predict(mod, data = COVdata, type="response")
+    #convert defaults from "Yes" and "No" to 1's and 0's
+    ActualLabel <- ifelse(COVdata[outcomes[i]]=="TRUE", 1, 0)
+    optimal <- optimalCutoff(ActualLabel, pred)[1]
+    #create confusion matrix
+    r=confusionMatrix(ActualLabel, pred,threshold = optimal)
+  
+    #True posive value and Negative Predictive value value
+    TN=r[1,1]
+    FN=r[1,2]
+    FP=r[2,1]
+    TP=r[2,2]
+    
+    PPV1=TP/(TP+FP)
+    NPV1=TN/(TN+FN)
+  
+    ################Book keeping column#################
+    #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<-i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-round(PPV1,2)
+    dfResults[i,"NPV"]<-round(NPV1,2)
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no   
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }else{
+     #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<- i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-0
+    dfResults[i,"NPV"]<-0
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no  
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }
+
+  }
+  print(dfResults)
+}
+```
+
+
+# Normal+Micro group
+
+## Clinical parameter (CP): Positive Predictive value and Negative Predictive value for each year (1 to 6)
+```{r Normal_Micro_CP}
+#define conditions like clinical parameters (CP) 
+CP<-c("age","hemoglobin","map","bmi","egfr","logacr")
+
+#make a dataframe to hold results for each year and group
+dfResults<-data.frame(matrix(nrow=6, ncol = 7))
+colnames(dfResults)<-c("tertile","year","PPV","NPV","P_event","N_event","prevalence [%]")
+
+
+#Extract time to events columns from rawdata
+outcomes<-names(rawdata)[grep("outcome",names(rawdata))]
+#cbind q1, q2, and q3
+Qdata<-cbind(T1pats,T2pats,T3pats)
+Q<-c("T1pats","T2pats","T3pats")
+
+#Loop over tertile
+for (j in 1:3){
+  #Loop over year
+  for (i in 1:6){
+    data<-cbind(rawdata[outcomes[i]],rawdata[CP])
+    TerPats<-Qdata[,Q[j]]
+    idx<-which(TerPats & normopats | TerPats & micropats)
+    COVdata<-na.omit(data[idx,])
+    event<-sum(data[outcomes[i]][idx,],na.rm = TRUE)
+    event_no<-sum(!data[outcomes[i]][idx,],na.rm = TRUE)
+    if(event!=0){
+    #Define formula and training the glm model
+    mod_formula <- as.formula(paste(outcomes[i],paste(CP,collapse = "+"),sep="~"))
+    mod <- glm(formula = mod_formula, family = binomial, data = COVdata)
+  
+  
+    ###################Make confusion matrix from glm model############
+    #use model to predict probability of default
+    pred<- predict(mod, data = COVdata, type="response")
+    #convert defaults from "Yes" and "No" to 1's and 0's
+    ActualLabel <- ifelse(COVdata[outcomes[i]]=="TRUE", 1, 0)
+    optimal <- optimalCutoff(ActualLabel, pred)[1]
+    #create confusion matrix
+    r=confusionMatrix(ActualLabel, pred,threshold = optimal)
+  
+    #True posive value and Negative Predictive value value
+    TN=r[1,1]
+    FN=r[1,2]
+    FP=r[2,1]
+    TP=r[2,2]
+    
+    PPV1=TP/(TP+FP)
+    NPV1=TN/(TN+FN)
+  
+    ################Book keeping column#################
+    #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<-i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-round(PPV1,2)
+    dfResults[i,"NPV"]<-round(NPV1,2)
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no 
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }else{
+     #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<- i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-0
+    dfResults[i,"NPV"]<-0
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no   
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }
+
+  }
+  print(dfResults)
+}
+```
+
+
+## Clinical parameter and Adenine (CP+AD): Positive Predictive value and Negative Predictive value for each year (1 to 6)
+```{r Normal_Micro_PPVwithTERTILE}
+#define conditions like clinical parameters (CP) 
+CP<-c("predictor","age","hemoglobin","map","bmi","egfr","logacr")
+
+#make a dataframe to hold results for each year and group
+dfResults<-data.frame(matrix(nrow=6, ncol = 7))
+colnames(dfResults)<-c("tertile","year","PPV","NPV","P_event","N_event","prevalence [%]")
+
+
+#Extract time to events columns from rawdata
+outcomes<-names(rawdata)[grep("outcome",names(rawdata))]
+#cbind q1, q2, and q3
+Qdata<-cbind(T1pats,T2pats,T3pats)
+Q<-c("T1pats","T2pats","T3pats")
+
+#Loop over tertile
+for (j in 1:3){
+  #Loop over year
+  for (i in 1:6){
+    data<-cbind(rawdata[outcomes[i]],rawdata[CP])
+    TerPats<-Qdata[,Q[j]]
+    idx<-which(TerPats & normopats | TerPats & micropats)
+    COVdata<-na.omit(data[idx,])
+    event<-sum(data[outcomes[i]][idx,],na.rm = TRUE)
+    event_no<-sum(!data[outcomes[i]][idx,],na.rm = TRUE)
+    if(event!=0){
+    #Define formula and training the glm model
+    mod_formula <- as.formula(paste(outcomes[i],paste(CP,collapse = "+"),sep="~"))
+    mod <- glm(formula = mod_formula, family = binomial, data = COVdata)
+  
+  
+    ###################Make confusion matrix from glm model############
+    #use model to predict probability of default
+    pred<- predict(mod, data = COVdata, type="response")
+    #convert defaults from "Yes" and "No" to 1's and 0's
+    ActualLabel <- ifelse(COVdata[outcomes[i]]=="TRUE", 1, 0)
+    optimal <- optimalCutoff(ActualLabel, pred)[1]
+    #create confusion matrix
+    r=confusionMatrix(ActualLabel, pred,threshold = optimal)
+  
+    #True posive value and Negative Predictive value value
+    TN=r[1,1]
+    FN=r[1,2]
+    FP=r[2,1]
+    TP=r[2,2]
+    
+    PPV1=TP/(TP+FP)
+    NPV1=TN/(TN+FN)
+  
+    ################Book keeping column#################
+    #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<-i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-round(PPV1,2)
+    dfResults[i,"NPV"]<-round(NPV1,2)
+    dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no  
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }else{
+     #Save each tertile
+    dfResults[i,"tertile"]<-j
+    #Save each year outcome
+    dfResults[i,"year"]<- i
+    #Save PPV and NPV value
+    dfResults[i,"PPV"]<-0
+    dfResults[i,"NPV"]<-0
+     dfResults[i,"P_event"]<-event
+    dfResults[i,"N_event"]<-event_no   
+    dfResults[i,"prevalence [%]"]<-round(event/(event+event_no)*100,2)
+    }
+
+  }
+  print(dfResults)
+}
+```

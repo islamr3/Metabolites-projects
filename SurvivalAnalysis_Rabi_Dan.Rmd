@@ -1,0 +1,413 @@
+---
+title: ' Survival analysis for adenine tertile 1'
+author: Daniel Montemayor and Rabiul Islam<br><small>Center for Renal Precision Medicine<br>University
+  of Texas Health San Antonio School of Medicine</small>
+date: "<small>`r Sys.Date()`</small>"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    number_sections: yes
+    toc_float:
+      collapsed: no
+    code_folding: hide
+    theme: cerulean
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+  word_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+![Center for Renal Precision Medicine](https://dmontemayor.github.io/assets/Long_SOM/horizontal/JPG/UTHSA_Long-SOM_H_CMYK.jpg)
+
+
+```{r setup,include=FALSE}
+library('survival')
+library('survminer')
+library('dplyr')
+library('CBPS')
+library('purrr')
+library('gtsummary')
+library('gt')
+library('cobalt')
+library("officer")
+library("rvg")
+library('lme4')
+library('lmerTest')
+library("rstudioapi") 
+library(survival)
+```
+
+
+```{r constants}
+rm(list=ls())
+set.seed( 2011 )
+#Constants
+MWade = 135.13 # molecular weights for adenine in g/mol
+MWcre = 113.12 #molecular weights for creatinine in g/mol
+
+#Random number seed
+set.seed(10079)
+
+```
+
+```{r download}
+#get data
+rawdata <- read.csv("RedCapUp2.csv")
+```
+
+```{r exclusioncriteria}
+#remove patients with no adenine values
+rawdata <- rawdata[!is.na(rawdata$Adenine..nM.uM.), ]
+```
+
+# Display Adenine cutoff values between tertiles
+```{r partition}
+
+#Roman 
+#rawdata$acr<-(rawdata$urine_albumin_v3y0/rawdata$urine_creatinine_v3y0)*100
+#select normogroup
+#normopats <- rawdata$acr <30
+#micropats <- rawdata$acr >=30 & rawdata$acr <300
+
+#get ACR in units of mg/mmol (Dan)
+rawdata$acr<-(rawdata$urine_albumin_v3y0/rawdata$urine_creatinine_v3y0)*1000/88.42
+#select normogroup
+normopats <- rawdata$acr <3
+micropats <- rawdata$acr >=3 & rawdata$acr <30
+print(paste("number of patients with normo-albuminuria = ", sum(normopats, na.rm = TRUE)))
+print(paste("number of patients with micro-albuminuria = ", sum(micropats, na.rm = TRUE)))
+```
+
+# get adenine tertiles cutoff values
+```{r adeninecutoff}
+quants <- quantile(rawdata$Adenine..nM.uM., c(0,1/3,2/3,1), na.rm = TRUE)
+print(paste("tertile cutoffs in (nm/um)= ", paste(quants, collapse=", ")))
+print(paste("tertile cutoffs in (mg/g)= ", paste(quants*MWcre/MWade, collapse=", ")))
+```
+
+```{r partitionwithtertile}
+T1pats <- rawdata$Adenine..nM.uM. >= quants[1] & rawdata$Adenine..nM.uM. < quants[2]
+T2pats <- rawdata$Adenine..nM.uM. >= quants[2] & rawdata$Adenine..nM.uM. < quants[3]
+T3pats <- rawdata$Adenine..nM.uM. >= quants[3]
+print(paste("Total number of patients ", sum(!is.na(rawdata$Adenine..nM.uM.))))
+
+print(paste("number of patients in T1 ", sum(T1pats, na.rm = TRUE)))
+print(paste("number of patients in T2 ", sum(T2pats, na.rm = TRUE)))
+print(paste("number of patients in T3 ", sum(T3pats, na.rm = TRUE)))
+```
+
+
+
+# Adenine and clinical Variable preprocessing to apply glm 
+```{r predictor1}
+impute<-function(x){
+  replace(x, x==0, min(x[x>0], na.rm = TRUE)/2)
+}
+#predictor is log2 adenine
+rawdata$logadenine<- log2(impute(rawdata$Adenine..nM.uM.))
+
+#Clinical varible normalization based on z-score
+rawdata$age<-scale(rawdata$age_integer_v3y0)
+rawdata$hemoglobin<-scale(rawdata$hemoglobin_a1c_v3y0)
+rawdata$map<-scale(rawdata$map_v3y0)
+rawdata$bmi<-scale(rawdata$bmi_v3y0)
+rawdata$egfr<-scale(rawdata$egfr_ckd_epi_v3y0)
+rawdata$logacr<-scale(log2(rawdata$acr))
+```
+
+
+```{r getEvent}
+#Create event sumarry
+rawdata<-within(rawdata,{
+  #Create event variable
+  event <- as.numeric(sa_allc_cric_renal3_v3y0 %in% c(1,2)) 
+  time<-sa_allc_cric_time_renal3_v3y0
+  #Create a survival vector
+  surv<-Surv(time,event)
+})
+```
+
+
+```{r}
+#define covariates  
+covariates <- c("logadenine","age","hemoglobin","map","bmi","egfr","logacr")
+newDnames <- c("logadenine","age","hemoglobin","map","bmi","egfr","logacr","time","event")
+
+#Define formula
+multi_formula <- as.formula(paste('Surv(time, event)~',paste(covariates, collapse="+")))
+
+#Tertile 1 and norm
+idx1<-which(T1pats & normopats)
+dataNT1<-rawdata[idx1,][newDnames]%>%
+  na.omit()
+
+
+f1<-survfit(multi_formula,data=dataNT1)
+
+
+multi_model1<-coxph(multi_formula, data = rawdata[idx1,])
+
+#Tertile 2 and norm
+idx2<-which(T2pats & normopats)
+multi_model2<-coxph(multi_formula, data = rawdata[idx2,])
+
+
+#Tertile 3 and norm
+idx3<-which(T3pats & normopats)
+multi_model3<-coxph(multi_formula, data = rawdata[idx3,])
+
+#Servival analysis
+f1<-survfit(multi_formula,data=rawdata[idx1,])
+f2<-survfit(multi_formula,data = rawdata[idx2,])
+fits_list <- list(Q1 = f1, Q2 = f2)
+
+legend.title <- list("Q1", "Q2")
+ggsurvplot_list(fits_list, rawdata, legend.title = legend.title)
+
+
+#fit models
+uvar_models <- lapply( uvar_formulas, function(x){surv_fit(x, data = quant_data)})
+
+#plot models
+ggsurvplot(uvar_models, conf.int = TRUE, pval = TRUE)
+```
+
+
+
+
+
+
+```{r outcome40}
+#select eGFR
+egfrcols <- names(rawdata)[grep("egfr_cric_v", names(rawdata))]
+#loop over years and count events for each year
+for (year in 1:7){
+  #print(year)
+  #calculate 40% decline at each year
+  t1 <- rawdata[, egfrcols[year+1]]  #EGFR[,year]
+  t0 <- rawdata[, egfrcols[1]] #rawdata$egfr_cric_v3y0
+  rawdata[paste("outcome40",year, sep = "_")] = ((t1-t0)/t0 < -.40)   #| (t2==1)
+}
+```
+
+# Adenine and clinical Variable preprocessing to apply glm 
+```{r predictor}
+impute<-function(x){
+  replace(x, x==0, min(x[x>0], na.rm = TRUE)/2)
+}
+#predictor is log2 adenine
+rawdata$predictor<- log2(impute(rawdata$Adenine..nM.uM.))
+
+#Clinical varible normalization based on z-score
+rawdata$age<-scale(rawdata$age_integer_v3y0)
+rawdata$hemoglobin<-scale(rawdata$hemoglobin_a1c_v3y0)
+rawdata$map<-scale(rawdata$map_v3y0)
+rawdata$bmi<-scale(rawdata$bmi_v3y0)
+rawdata$egfr<-scale(rawdata$egfr_ckd_epi_v3y0)
+rawdata$logacr<-scale(log2(rawdata$acr))
+```
+
+```{r BTest}
+pval_arr <- c()
+pval_norm<-c()
+pval_micro<-c()
+
+gain_arr<-c()
+testname<-c()
+testname_norm<-c()
+testname_micro<-c()
+pval_nm<-c()
+testname_nm<-c()
+```
+
+
+# Estimate outcome from year 1 to 6 together
+```{r Normal_outcome_commulative}
+#Extract time to events columns from rawdata
+outcomes<-names(rawdata)[grep("outcome",names(rawdata))]
+outcome<-c()
+#Loop over patients
+for (i in 1:dim(rawdata)[1]){
+  #commulative outcomes from year 1 to 6
+  outevent<-rawdata[outcomes[1:6]][i,]
+  outcome[i]<-sum(outevent,na.rm=TRUE)
+}
+rawdata$outcome<-outcome>0
+```
+
+
+# Normal group: likelihood ratio test for nested models (CP vs CP+Adenine). lrtest is a generic function for carrying out likelihood ratio tests. Link: https://www.rdocumentation.org/packages/lmtest/versions/0.9-39/topics/lrtest
+
+```{r Normal_CP1}
+#define conditions like clinical parameters (CP) 
+CP<-c("age","hemoglobin","map","bmi","egfr","logacr")
+
+#define conditions like clinical parameters (CP) 
+CPAD<-c("predictor","age","hemoglobin","map","bmi","egfr","logacr")
+
+#Make a dataframe to hold results
+dfResults<-data.frame(matrix(nrow = 3, ncol = 6))
+colnames(dfResults)<-c("tertile","PPV","NPV","P_event","N_event","prevalence [%]")
+
+#cbind q1, q2, and q3
+Qdata<-cbind(T1pats,T2pats,T3pats)
+
+#Loop over tertile
+for (j in 1:3){
+  #Remove NAN
+  data<-cbind(rawdata["outcome"],rawdata[CP],rawdata["predictor"])
+  TerPats<-Qdata[,j]
+  idx<-which(TerPats & normopats)
+  #print(which( rawdata["outcome"][idx,]))
+  P_event<-sum(rawdata["outcome"][idx,],na.rm = TRUE)
+  N_event<-sum(!rawdata["outcome"][idx,],na.rm=TRUE)
+  
+ #Remove NaN and extract Tertile and NA
+  COVdata<-na.omit(data[idx,])
+
+  #Define formula and training the glm model
+  mod_formula<-as.formula(paste("outcome",paste(CP,collapse="+"),sep = "~"))
+  Amod_formula<-as.formula(paste("outcome",paste(CPAD,collapse = "+"),sep = "~"))
+  
+  mod <- glm(formula = mod_formula, family = binomial, data = COVdata)
+  Amod<-glm(formula = Amod_formula,family = binomial,data=COVdata)
+  
+  #Gain estimation
+  A1<-lroc(mod,graph=FALSE)$auc
+  A2<-lroc(Amod,graph = FALSE)$auc
+  Gain<-A2-A1
+  
+  #Perform likelood ration test for nested model
+  modeltest<-lrtest(Amod,mod)
+  
+  ###############Book keeping ###########
+  temp<-modeltest$p.value
+  pval_arr <-c(pval_arr, temp)
+  testname<-c(testname,paste(c("Norm",j),collapse = "-"))
+  print(paste("Tertile:",j))
+  print(modeltest)
+}
+```
+
+
+# Micro group: likelihood ratio test for nested models (CP vs CP+Adenine). lrtest is a generic function for carrying out likelihood ratio tests. Link: https://www.rdocumentation.org/packages/lmtest/versions/0.9-39/topics/lrtest
+
+```{r Micro_CP1}
+#define conditions like clinical parameters (CP) 
+CP<-c("age","hemoglobin","map","bmi","egfr","logacr")
+
+
+#define conditions like clinical parameters (CP) 
+CPAD<-c("predictor","age","hemoglobin","map","bmi","egfr","logacr")
+
+#Make a dataframe to hold results
+dfResults<-data.frame(matrix(nrow = 3, ncol = 6))
+colnames(dfResults)<-c("tertile","PPV","NPV","P_event","N_event","prevalence [%]")
+
+#cbind q1, q2, and q3
+Qdata<-cbind(T1pats,T2pats,T3pats)
+
+#Loop over tertile
+for (j in 1:3){
+  #Remove NAN
+  data<-cbind(rawdata["outcome"],rawdata[CP],rawdata["predictor"])
+  TerPats<-Qdata[,j]
+  idx<-which(TerPats & micropats)
+  #print(which( rawdata["outcome"][idx,]))
+  P_event<-sum(rawdata["outcome"][idx,],na.rm = TRUE)
+  N_event<-sum(!rawdata["outcome"][idx,],na.rm=TRUE)
+  
+  COVdata<-na.omit(data[idx,])
+
+  #Define formula and training the glm model
+  mod_formula<-as.formula(paste("outcome",paste(CP,collapse="+"),sep = "~"))
+  Amod_formula<-as.formula(paste("outcome",paste(CPAD,collapse = "+"),sep = "~"))
+  
+  mod <- glm(formula = mod_formula, family = binomial, data = COVdata)
+  
+  Amod<-glm(formula = Amod_formula,family = binomial,data=COVdata)
+  
+  #Gain estimation
+  A1<-lroc(mod,graph=FALSE)$auc
+  A2<-lroc(Amod,graph = FALSE)$auc
+  Gain<-A2-A1
+  
+  #Perform likelood ration test for nested model
+  modeltest<-lrtest(Amod,mod)
+
+    ###############Book keeping ###########
+  temp<-modeltest$p.value
+  pval_arr <-c(pval_arr, temp)
+  testname<-c(testname,paste(c("Micro",j),collapse = "-"))
+  
+  print(paste("Tertile:",j))
+  print(modeltest)
+
+}
+```
+
+
+# Normal and Micro group: likelihood ratio test for nested models (CP vs CP+Adenine). lrtest is a generic function for carrying out likelihood ratio tests. Link: https://www.rdocumentation.org/packages/lmtest/versions/0.9-39/topics/lrtest
+```{r Normal+Micro_CP1}
+#define conditions like clinical parameters (CP) 
+CP<-c("age","hemoglobin","map","bmi","egfr","logacr")
+
+
+#define conditions like clinical parameters (CP) 
+CPAD<-c("predictor","age","hemoglobin","map","bmi","egfr","logacr")
+
+#Make a dataframe to hold results
+dfResults<-data.frame(matrix(nrow = 3, ncol = 6))
+colnames(dfResults)<-c("tertile","PPV","NPV","P_event","N_event","prevalence [%]")
+
+#cbind q1, q2, and q3
+Qdata<-cbind(T1pats,T2pats,T3pats)
+
+#Loop over tertile
+for (j in 1:3){
+  #Remove NAN
+  data<-cbind(rawdata["outcome"],rawdata[CP],rawdata["predictor"])
+  TerPats<-Qdata[,j]
+  idx<-which(TerPats & normopats | TerPats & micropats)
+  #print(which( rawdata["outcome"][idx,]))
+  P_event<-sum(rawdata["outcome"][idx,],na.rm = TRUE)
+  N_event<-sum(!rawdata["outcome"][idx,],na.rm=TRUE)
+  
+ 
+  COVdata<-na.omit(data[idx,])
+
+  #Define formula and training the glm model
+  mod_formula<-as.formula(paste("outcome",paste(CP,collapse="+"),sep = "~"))
+  Amod_formula<-as.formula(paste("outcome",paste(CPAD,collapse = "+"),sep = "~"))
+  
+  mod <- glm(formula = mod_formula, family = binomial, data = COVdata)
+  Amod<-glm(formula = Amod_formula,family = binomial,data=COVdata)
+  
+  #Gain estimation
+  A1<-lroc(mod,graph=FALSE)$auc
+  A2<-lroc(Amod,graph = FALSE)$auc
+  Gain<-A2-A1
+  
+  #Perform likelood ration test for nested model
+  modeltest<-lrtest(Amod,mod)
+
+  ###############Book keeping ###########
+  temp<-modeltest$p.value
+  pval_arr <-c(pval_arr, temp)
+  testname<-c(testname,paste(c("NA+MA",j),collapse = "-"))
+    
+  print(paste("Tertile:",j))
+  print(modeltest)
+}
+```
+
+
+# Adjust P-values for Multiple Comparisons: Benjamini Hochberg analysis
+```{r Adjustpvalue1}
+adjP<-p.adjust(pval_arr, method = "BH")
+print(cbind(pval_arr,adjP,testname))
+```
+

@@ -1,0 +1,160 @@
+---
+title: 'survival_model.rmd'
+author: "fernandezr5"
+output: 
+  html_document:
+          toc: true  
+          toc_depth: 3
+          number_sections: false
+          theme: cosmo
+          toc_float: true
+---
+  
+```{r,echo=FALSE,message=FALSE,warning=FALSE,include=FALSE}
+require("adapr") 
+require("methods") 
+require("knitr") 
+require('kableExtra')
+```
+
+# Covariate Table
+♠
+```{r echo=FALSE, fig.align='center'}
+cov_tab1
+```
+
+# Variable Comparisons
+
+## Event Variable Comparison
+
+```{r echo=FALSE}
+sa_allc_var_comparisons
+```
+
+## Time of Death Comparison
+
+```{r echo=FALSE}
+time_death_table
+```
+
+# Event Summaries
+
+```{r echo=FALSE, fig.align='center'}
+event_summary1
+```
+
+<br>
+
+  ```{r echo=FALSE, fig.align='center'}
+event_summary2
+```
+
+# 15 Year Mortality
+
+```{r echo=FALSE}
+kable(mortality_15yr) %>%
+  kable_styling(full_width = T)
+```
+
+# Survival Models
+
+## Adenine Adjusted Model (ESRD)
+
+```{r echo=FALSE, fig.align='center'}
+model_newvar
+```
+
+## Fully Adjusted (Unweighted)
+
+```{r echo=FALSE, fig.align='center'}
+model5
+```
+
+# Combined Concordance
+
+```{r echo=FALSE}
+combined_c_index_table %>%
+  gt(rowname_col = 'model')
+```
+
+# Subset Models Adenine In
+
+```{r echo=FALSE, fig.align='center'}
+forest_plots
+```
+
+## Sex
+
+```{r echo=FALSE, fig.align='center'}
+all_subset_results$adenine_in$subset_summaries$sex %>%
+  tbl_merge(tab_spanner = c('Male', 'Female'))
+```
+
+## ACR Groups
+
+```{r echo=FALSE}
+all_subset_results$adenine_in$subset_summaries$acr_group %>%
+  tbl_merge(tab_spanner = levels(subset_dataset$acr_group))
+```
+
+## Model Results
+
+```{r echo=FALSE, fig.align='center'}
+tertile_km_hazard
+```
+
+```{r echo=FALSE, fig.align='center'}
+surv_tbl_stack
+```
+
+## GFIF Table
+
+```{r echo=FALSE}
+vif_tab
+```
+
+# Covariate Balance Evaluation
+
+## Fully Adjusted
+
+```{r echo=FALSE}
+propensity_weight_list$cbpsdata2$balance_df %>%
+  gt(rowname_col = 'Variable')
+```
+
+## ACR Excluded
+
+```{r echo=FALSE}
+propensity_weight_list$cbpsdata3$balance_df %>%
+  gt(rowname_col = 'Variable')
+```
+
+# Mixed Model
+
+```{r echo=FALSE}
+mixed_model_coefs
+```
+
+```{r echo=FALSE, fig.align='center'}
+effects_plot
+```
+
+# Visualization
+
+## Cumulative incidence
+
+```{r echo=FALSE, fig.align='center', warning = F, message=F}
+tertile_km_singapore$plot
+```
+
+## Effects plot 95% CI
+
+```{r echo=FALSE, fig.align='center'}
+effects_plot_singapore1
+```
+
+## Effects plot SE
+
+```{r echo=FALSE, fig.align='center'}
+effects_plot_singapore2
+```

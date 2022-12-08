@@ -1,0 +1,289 @@
+---
+title: "Count 30%, 40%, and 50% egfr decline"
+author: "Daniel Montemayor and Rabiul Islam<br><small>Center for Renal Precision Medicine<br>University of Texas Health San Antonio School of Medicine</small>"
+date: "<small>`r Sys.Date()`</small>"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    number_sections: true
+    toc_float: 
+      collapsed: false
+    code_folding: hide
+    theme: cerulean
+---
+
+![Center for Renal Precision Medicine](https://dmontemayor.github.io/assets/Long_SOM/horizontal/JPG/UTHSA_Long-SOM_H_CMYK.jpg)
+
+# Brief
++Outcome is eGFR decline of 30%, 40% and 50% in each of the bins for the normo and micro groups  (for each year)
++ Partion by Adenine Tertiles for NA, MA groups.
++Count the outcomes
+ 
+```{r requirements, message=FALSE, warning=FALSE}
+#Requirements
+requirements <- c("dplyr")
+
+#CRAN repository
+repos <- "http://cran.us.r-project.org"
+
+#install and load missing requirements
+for (pack in requirements){
+  if( !is.element(pack, .packages(all.available = TRUE)) ) {
+    #install.packages(pack, repos = repos)
+    install.packages(pack)
+  }
+  library(pack, character.only = TRUE)
+}
+```
+
+```{r constants}
+#Constants
+MWade = 135.13 # molecular weights for adenine in g/mol
+MWcre = 113.12 #molecular weights for creatinine in g/mol
+
+#Random number seed
+set.seed(10079)
+
+```
+
+```{r download}
+#get data
+rawdata <- read.csv("RedCapUp2.csv")#, stringsAsFactors = TRUE)
+```
+
+```{r exclusioncriteria}
+#remove patients with no adenine values
+rawdata <- rawdata[!is.na(rawdata$Adenine..nM.uM.), ]
+```
+
+# Display Adenine cutoff values between tertiles
+```{r partition}
+#get ACR in units of mg/mmol
+rawdata$acr<-(rawdata$urine_albumin_v3y0/rawdata$urine_creatinine_v3y0)*1000/88.42
+
+#select normogroup
+normopats <- rawdata$acr <3
+micropats <- rawdata$acr >=3 & rawdata$acr <30
+print(paste("number of patients with normo-albuminuria = ", sum(normopats, na.rm = TRUE)))
+print(paste("number of patients with micro-albuminuria = ", sum(micropats, na.rm = TRUE)))
+```
+
+#get adenine tertiles cutoff values
+```{r}
+quants <- quantile(rawdata$Adenine..nM.uM., c(0,1/3,2/3,1), na.rm = TRUE)
+print(paste("tertile cutoffs in (nm/um)= ", paste(quants, collapse=", ")))
+print(paste("tertile cutoffs in (mg/g)= ", paste(quants*MWcre/MWade, collapse=", ")))
+```
+
+```{r partition with tertile}
+T1pats <- rawdata$Adenine..nM.uM. >= quants[1] & rawdata$Adenine..nM.uM. < quants[2]
+T2pats <- rawdata$Adenine..nM.uM. >= quants[2] & rawdata$Adenine..nM.uM. < quants[3]
+T3pats <- rawdata$Adenine..nM.uM. >= quants[3]
+print(paste("Total number of patients ", sum(!is.na(rawdata$Adenine..nM.uM.))))
+
+print(paste("number of patients in T1 ", sum(T1pats, na.rm = TRUE)))
+print(paste("number of patients in T2 ", sum(T2pats, na.rm = TRUE)))
+print(paste("number of patients in T3 ", sum(T3pats, na.rm = TRUE)))
+```
+# Normal Group: 30% decline at each year
+```{r}
+#print(paste("year", "T1events", "T2events", "T3events"))
+
+#make a dataframe to hold event count
+df <- data.frame(matrix(nrow=10, ncol = 4))
+colnames(df) <- c("year", "T1", "T2", "T3")
+
+#select eGFR
+EGFR<-rawdata%>%
+   dplyr::select(egfr_cric_v5y1,egfr_cric_v7y2,egfr_cric_v9y3,egfr_cric_v11y4,egfr_cric_v13y5,egfr_cric_v15y6,egfr_cric_v17y7,egfr_cric_v19y8,egfr_cric_v21y9,egfr_cric_v23y10)
+#loop over years and count events for each year
+for (year in 1:10){
+  #print(year)
+  #calculate 30% decline at each year
+  t1 <- EGFR[,year]
+  t0 <- rawdata$egfr_cric_v3y0
+  rawdata$outcome = ((t1-t0)/t0 < -.30)# | (t2==1)
+  T1events <- sum(rawdata$outcome[T1pats & normopats], na.rm = TRUE)
+  T2events <- sum(rawdata$outcome[T2pats & normopats], na.rm = TRUE)
+  T3events <- sum(rawdata$outcome[T3pats & normopats], na.rm = TRUE)
+  df$year[year] <- year
+  df$T1[year] <- T1events
+  df$T2[year] <- T2events
+  df$T3[year] <- T3events
+}
+print(df)
+```
+
+
+
+
+
+
+
+# Normal Group: 40% decline at each year
+```{r}
+#print(paste("year", "T1events", "T2events", "T3events"))
+
+#make a dataframe to hold event count
+df <- data.frame(matrix(nrow=10, ncol = 4))
+colnames(df) <- c("year", "T1", "T2", "T3")
+#Count no. of false patients for each tertile 
+ptdf<-data.frame(matrix(nrow=10,ncol=4))
+colnames(ptdf) <- c("year", "T1", "T2", "T3")
+#select eGFR
+EGFR<-rawdata%>%
+   dplyr::select(egfr_cric_v5y1,egfr_cric_v7y2,egfr_cric_v9y3,egfr_cric_v11y4,egfr_cric_v13y5,egfr_cric_v15y6,egfr_cric_v17y7,egfr_cric_v19y8,egfr_cric_v21y9,egfr_cric_v23y10)
+#loop over years and count events for each year
+for (year in 1:10){
+  #print(year)
+  #calculate 40% decline at each year
+  t1 <- EGFR[,year]
+  t0 <- rawdata$egfr_cric_v3y0
+  rawdata$outcome = ((t1-t0)/t0 < -.40)# | (t2==1)
+  T1events <- sum(rawdata$outcome[T1pats & normopats], na.rm = TRUE)
+  T1eventsF <- sum(!rawdata$outcome[T1pats & normopats], na.rm = TRUE)
+  T2events <- sum(rawdata$outcome[T2pats & normopats], na.rm = TRUE)
+  T2eventsF <- sum(!rawdata$outcome[T2pats & normopats], na.rm = TRUE)
+  T3events <- sum(rawdata$outcome[T3pats & normopats], na.rm = TRUE)
+  T3eventsF <- sum(!rawdata$outcome[T3pats & normopats], na.rm = TRUE)
+  df$year[year] <- year
+  ptdf$year[year] <- year
+  
+  df$T1[year] <- T1events
+  ptdf$T1[year] <- T1eventsF
+  
+  df$T2[year] <- T2events
+  ptdf$T2[year] <- T2eventsF
+  
+  df$T3[year] <- T3events
+  ptdf$T3[year] <- T3eventsF
+}
+print(df)
+print(ptdf)
+```
+# Normal Group: 50% decline at each year
+```{r}
+#print(paste("year", "T1events", "T2events", "T3events"))
+
+#make a dataframe to hold event count
+df <- data.frame(matrix(nrow=10, ncol = 4))
+colnames(df) <- c("year", "T1", "T2", "T3")
+
+#select eGFR
+EGFR<-rawdata%>%
+   dplyr::select(egfr_cric_v5y1,egfr_cric_v7y2,egfr_cric_v9y3,egfr_cric_v11y4,egfr_cric_v13y5,egfr_cric_v15y6,egfr_cric_v17y7,egfr_cric_v19y8,egfr_cric_v21y9,egfr_cric_v23y10)
+#loop over years and count events for each year
+for (year in 1:10){
+  #print(year)
+  #calculate 50% decline at each year
+  t1 <- EGFR[,year]
+  t0 <- rawdata$egfr_cric_v3y0
+  rawdata$outcome = ((t1-t0)/t0 < -.50)# | (t2==1)
+  T1events <- sum(rawdata$outcome[T1pats & normopats], na.rm = TRUE)
+  T2events <- sum(rawdata$outcome[T2pats & normopats], na.rm = TRUE)
+  T3events <- sum(rawdata$outcome[T3pats & normopats], na.rm = TRUE)
+  df$year[year] <- year
+  df$T1[year] <- T1events
+  df$T2[year] <- T2events
+  df$T3[year] <- T3events
+}
+print(df)
+```
+
+
+
+
+
+
+# Micro Group: 30% decline at each year
+```{r}
+#print(paste("year", "T1events", "T2events", "T3events"))
+
+#make a dataframe to hold event count
+df <- data.frame(matrix(nrow=10, ncol = 4))
+colnames(df) <- c("year", "T1", "T2", "T3")
+
+#select eGFR
+EGFR<-rawdata%>%
+   dplyr::select(egfr_cric_v5y1,egfr_cric_v7y2,egfr_cric_v9y3,egfr_cric_v11y4,egfr_cric_v13y5,egfr_cric_v15y6,egfr_cric_v17y7,egfr_cric_v19y8,egfr_cric_v21y9,egfr_cric_v23y10)
+#loop over years and count events for each year
+for (year in 1:10){
+  #print(year)
+  #calculate 30% decline at each year
+  t1 <- EGFR[,year]
+  t0 <- rawdata$egfr_cric_v3y0
+  rawdata$outcome = ((t1-t0)/t0 < -.30)# | (t2==1)
+  T1events <- sum(rawdata$outcome[T1pats & micropats], na.rm = TRUE)
+  T2events <- sum(rawdata$outcome[T2pats & micropats], na.rm = TRUE)
+  T3events <- sum(rawdata$outcome[T3pats & micropats], na.rm = TRUE)
+  df$year[year] <- year
+  df$T1[year] <- T1events
+  df$T2[year] <- T2events
+  df$T3[year] <- T3events
+}
+print(df)
+```
+
+
+
+# Micro Group: 40% decline at each year
+```{r}
+#print(paste("year", "T1events", "T2events", "T3events"))
+
+#make a dataframe to hold event count
+df <- data.frame(matrix(nrow=10, ncol = 4))
+colnames(df) <- c("year", "T1", "T2", "T3")
+
+#select eGFR
+EGFR<-rawdata%>%
+   dplyr::select(egfr_cric_v5y1,egfr_cric_v7y2,egfr_cric_v9y3,egfr_cric_v11y4,egfr_cric_v13y5,egfr_cric_v15y6,egfr_cric_v17y7,egfr_cric_v19y8,egfr_cric_v21y9,egfr_cric_v23y10)
+#loop over years and count events for each year
+for (year in 1:10){
+  #print(year)
+  #calculate 40% decline at each year
+  t1 <- EGFR[,year]
+  t0 <- rawdata$egfr_cric_v3y0
+  rawdata$outcome = ((t1-t0)/t0 < -.40)# | (t2==1)
+  T1events <- sum(rawdata$outcome[T1pats & micropats], na.rm = TRUE)
+  T2events <- sum(rawdata$outcome[T2pats & micropats], na.rm = TRUE)
+  T3events <- sum(rawdata$outcome[T3pats & micropats], na.rm = TRUE)
+  df$year[year] <- year
+  df$T1[year] <- T1events
+  df$T2[year] <- T2events
+  df$T3[year] <- T3events
+}
+print(df)
+```
+
+
+# Micro Group: 50% decline at each year
+```{r}
+#print(paste("year", "T1events", "T2events", "T3events"))
+
+#make a dataframe to hold event count
+df <- data.frame(matrix(nrow=10, ncol = 4))
+colnames(df) <- c("year", "T1", "T2", "T3")
+
+#select eGFR
+EGFR<-rawdata%>%
+   dplyr::select(egfr_cric_v5y1,egfr_cric_v7y2,egfr_cric_v9y3,egfr_cric_v11y4,egfr_cric_v13y5,egfr_cric_v15y6,egfr_cric_v17y7,egfr_cric_v19y8,egfr_cric_v21y9,egfr_cric_v23y10)
+#loop over years and count events for each year
+for (year in 1:10){
+  #print(year)
+  #calculate 30% decline at each year
+  t1 <- EGFR[,year]
+  t0 <- rawdata$egfr_cric_v3y0
+  rawdata$outcome = ((t1-t0)/t0 < -.50)# | (t2==1)
+  T1events <- sum(rawdata$outcome[T1pats & micropats], na.rm = TRUE)
+  T2events <- sum(rawdata$outcome[T2pats & micropats], na.rm = TRUE)
+  T3events <- sum(rawdata$outcome[T3pats & micropats], na.rm = TRUE)
+  df$year[year] <- year
+  df$T1[year] <- T1events
+  df$T2[year] <- T2events
+  df$T3[year] <- T3events
+}
+print(df)
+```
+
+

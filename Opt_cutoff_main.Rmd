@@ -1,0 +1,247 @@
+---
+title: "optimize Adenine cutoff that disriminates 40% egfr decline event at year 1"
+author: "Daniel Montemayor and Rabiul Islam<br><small>Center for Renal Precision Medicine<br>University of Texas Health San Antonio School of Medicine</small>"
+date: "<small>`r Sys.Date()`</small>"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    number_sections: true
+    toc_float: 
+      collapsed: false
+    code_folding: hide
+    theme: cerulean
+---
+
+![Center for Renal Precision Medicine](https://dmontemayor.github.io/assets/Long_SOM/horizontal/JPG/UTHSA_Long-SOM_H_CMYK.jpg)
+
+# Brief
++ outcome is 40% eGFR decline wrt baseline at year 1
++ predictor is Adenine cutoff value that optimizes p_value or AUC 
++ With  adjustment for clinical variables.
++ In fullcohort
+
+```{r requirements, message=FALSE, warning=FALSE}
+#Requirements
+requirements <- c("dplyr", "epiDisplay")
+
+#CRAN repository
+repos <- "http://cran.us.r-project.org"
+
+#install and load missing requirements
+for (pack in requirements){
+  if( !is.element(pack, .packages(all.available = TRUE)) ) {
+    #install.packages(pack, repos = repos)
+    install.packages(pack)
+  }
+  library(pack, character.only = TRUE)
+}
+```
+
+```{r constants}
+#Constants
+rm(list=ls())
+MWade = 135.13 # molecular weights for adenine in g/mol
+MWcre = 113.12 #molecular weights for creatinine in g/mol
+
+#Random number seed
+set.seed(10079)
+
+```
+
+```{r download}
+#get data
+rawdata <- read.csv("RedCapUp2.csv")#, stringsAsFactors = TRUE)
+```
+
+```{r exclusioncriteria}
+#remove patients with no adenine values
+rawdata <- rawdata[!is.na(rawdata$Adenine..nM.uM.), ]
+```
+
+# Display Adenine cutoff values between tertiles
+```{r partition}
+#get ACR in units of mg/mmol
+rawdata$acr<-(rawdata$urine_albumin_v3y0/rawdata$urine_creatinine_v3y0)*1000/88.42
+
+#select normogroup
+normopats <- which(rawdata$acr <3)
+micropats <- which(rawdata$acr >=3 &rawdata$acr <30)
+macropats <- which(rawdata$acr >=30)
+print(paste("number of patients with normo-albuminuria = ", length(normopats)))
+print(paste("number of patients with micro-albuminuria = ", length(micropats)))
+print(paste("number of patients with macro-albuminuria = ", length(macropats)))
+
+#get adenine tertiles cutoff values
+quants <- quantile(rawdata$Adenine..nM.uM., c(0,1/3,2/3,1), na.rm = TRUE)
+print(paste("tertile cutoffs in (nm/um)= ", paste(quants, collapse=", ")))
+print(paste("tertile cutoffs in (mg/g)= ", paste(quants*MWcre/MWade, collapse=", ")))
+```
+
+```{r sort}
+sorted_adenine_values <- rawdata$Adenine..nM.uM.[order(rawdata$Adenine..nM.uM.)]
+```
+
+```{r outcome1}
+#calculate 40% decline at year 1
+t1 <- rawdata$egfr_cric_v5y1
+t0 <- rawdata$egfr_cric_v3y0
+rawdata$outcome1 = (t1-t0)/t0 < -.40
+nevent <- sum(rawdata$outcome1, na.rm = TRUE)
+print(paste("number of events in year 1 = ",nevent))
+```
+
+```{r normalize}
+rawdata$age_integer_v3y0 <- scale(rawdata$age_integer_v3y0)
+rawdata$hemoglobin_a1c_v3y0<- scale(rawdata$hemoglobin_a1c_v3y0)
+rawdata$map_v3y0<- scale(rawdata$map_v3y0)
+rawdata$bmi_v3y0<- scale(rawdata$bmi_v3y0)
+rawdata$egfr_cric_v3y0<- scale(rawdata$egfr_cric_v3y0)
+rawdata$acr <- scale(log2(rawdata$acr))
+```
+
+# Optimize Adenine cutoff for 40% decline at 1 year without adj for clinical variables
+
+```{r mainloop1, warning=FALSE, include=FALSE}
+
+#init best performance metrics
+best_pval = 1.0
+best_auc = .5
+
+####################Rabi Cutoff #####################
+#idx<-which(rawdata$Adenine..nM.uM.<=0.024630967)
+# rawdata<-rawdata[idx,]
+
+#loop over adenine values
+for (i in 50:(length(sorted_adenine_values)-50)){
+  
+  rawdata$high_adenine <- rawdata$Adenine..nM.uM.>sorted_adenine_values[i]
+
+  #nhighAdenine <- sum(rawdata$predictor, na.rm=TRUE)
+  #nlowAdenine <- sum( !rawdata$predictor, na.rm=TRUE)
+  #print(paste("number of patient with low adenine  = ", nlowAdenine))
+  #print(paste("number of patient with High adenine  = ", nhighAdenine))
+
+  #fit model
+  mod1 <- glm(outcome1~high_adenine, data = rawdata, family = "binomial")
+  summod1 <- summary(mod1)
+  
+  #caluculate metrics
+  auc <- lroc(mod1, graph = FALSE)$auc
+  pval <- summod1$coef[2,4]
+  ci <- confint(mod1)[2,]
+
+  #diagonstic
+  #print(summod1)
+  #print(auc)
+  #print(pval)
+  #print(ci)
+
+  #if(pval <= best_pval){
+  if(auc >= best_auc){
+    best_auc <- auc
+    best_pval <- pval
+    best_cutoff <- sorted_adenine_values[i]
+    best_ci <- ci
+    best_model <- mod1
+    best_i <- i
+    prev <- sum(rawdata$high_adenine, na.rm = TRUE) 
+  }
+ 
+  if(i%%100==0){
+    print(i)
+    }
+  
+}
+
+```
+
+```{r}
+#diagonstic
+print(summary(best_model))
+print(paste("AUC=", best_auc))
+print(paste("pvalue=", best_pval))
+print(paste("95% CI=", paste(best_ci, collapse = ", ")))
+print(paste("Adenine cutoff (mg/g)=", best_cutoff))
+print(paste("High Adenine prevelance=", prev))
+print(paste("i=", best_i))
+```
+
+```{r}
+lroc(best_model, graph = TRUE)
+```
+# Optimize Adenine cutoff for 40% decline at 1 year with adj for clinincal variables
+
+```{r mainloop, warning=FALSE, include=FALSE}
+
+#init best performance metrics
+best_pval = 1.0
+best_auc = .5
+
+#loop over adenine values
+for (i in 50:(length(sorted_adenine_values)-50)){
+  
+  rawdata$high_adenine <- rawdata$Adenine..nM.uM.>sorted_adenine_values[i]
+
+  #nhighAdenine <- sum(rawdata$predictor, na.rm=TRUE)
+  #nlowAdenine <- sum( !rawdata$predictor, na.rm=TRUE)
+  #print(paste("number of patient with low adenine  = ", nlowAdenine))
+  #print(paste("number of patient with High adenine  = ", nhighAdenine))
+
+  #fit model
+  mod1 <- glm(outcome1~high_adenine+
+                 age_integer_v3y0+
+                 hemoglobin_a1c_v3y0+
+                 map_v3y0+
+                 bmi_v3y0+
+                 egfr_cric_v3y0+
+                 acr, data = rawdata, family = "binomial")
+  summod1 <- summary(mod1)
+  
+  #caluculate metrics
+  auc <- lroc(mod1, graph = FALSE)$auc
+  
+  ci <- confint(mod1)[2,]
+  
+  #diagonstic
+  #print(summod1)
+  #print(auc)
+  #print(pval)
+  #print(ci)
+
+  #if(pval <= best_pval){
+  if(auc >= best_auc){
+    best_auc <- auc
+    best_pval <- pval
+    best_cutoff <- sorted_adenine_values[i]
+    best_ci <- ci
+    best_model <- mod1
+    best_i <- i
+    prev <- sum(rawdata$high_adenine, na.rm = TRUE) 
+  }
+  
+  if(i%%100==0){
+    print(i)
+    }
+  
+}
+
+```
+
+```{r}
+#diagonstic
+print(summary(best_model))
+print(paste("AUC=", best_auc))
+print(paste("pvalue=", best_pval))
+print(paste("95% CI=", paste(best_ci, collapse = ", ")))
+print(paste("Adenine cutoff (mg/g)=", best_cutoff))
+print(paste("High Adenine prevelance=", prev/length(sorted_adenine_values)))
+print(paste("i=", best_i))
+
+
+
+```
+
+```{r}
+lroc(best_model, graph = TRUE)
+```

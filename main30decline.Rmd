@@ -1,0 +1,257 @@
+---
+title: "Count 30% egfr decline or ESRD events"
+author: "Daniel Montemayor and Rabiul Islam<br><small>Center for Renal Precision Medicine<br>University of Texas Health San Antonio School of Medicine</small>"
+date: "<small>`r Sys.Date()`</small>"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    number_sections: true
+    toc_float: 
+      collapsed: false
+    code_folding: hide
+    theme: cerulean
+---
+
+![Center for Renal Precision Medicine](https://dmontemayor.github.io/assets/Long_SOM/horizontal/JPG/UTHSA_Long-SOM_H_CMYK.jpg)
+
+# Brief
++ outcome is ESRD at or prior to the visit or 30% eGFR decline wrt baseline (for years 1,2 and 3)
++ Partion by Adenine Tertiles for full cohort, NA, MA, and MA+ groups.
++ count the outcomes.
+
+```{r requirements, message=FALSE, warning=FALSE}
+#Requirements
+requirements <- c("dplyr")
+
+#CRAN repository
+repos <- "http://cran.us.r-project.org"
+
+#install and load missing requirements
+for (pack in requirements){
+  if( !is.element(pack, .packages(all.available = TRUE)) ) {
+    #install.packages(pack, repos = repos)
+    install.packages(pack)
+  }
+  library(pack, character.only = TRUE)
+}
+```
+
+```{r constants}
+#Constants
+MWade = 135.13 # molecular weights for adenine in g/mol
+MWcre = 113.12 #molecular weights for creatinine in g/mol
+
+#Random number seed
+set.seed(10079)
+
+```
+
+```{r download}
+#get data
+rawdata <- read.csv("RedCapUp2.csv")#, stringsAsFactors = TRUE)
+```
+
+```{r exclusioncriteria}
+#remove patients with no adenine values
+rawdata <- rawdata[!is.na(rawdata$Adenine..nM.uM.), ]
+```
+
+# Display Adenine cutoff values between tertiles
+```{r partition}
+#get ACR in units of mg/mmol
+rawdata$acr<-(rawdata$urine_albumin_v3y0/rawdata$urine_creatinine_v3y0)*1000/88.42
+
+#select normogroup
+normopats <- rawdata$acr <3
+micropats <- rawdata$acr >=3 & rawdata$acr <30
+macropats <- rawdata$acr >=30
+print(paste("number of patients with normo-albuminuria = ", sum(normopats, na.rm = TRUE)))
+print(paste("number of patients with micro-albuminuria = ", sum(micropats, na.rm = TRUE)))
+print(paste("number of patients with macro-albuminuria = ", sum(macropats, na.rm = TRUE)))
+
+#get adenine tertiles cutoff values
+quants <- quantile(rawdata$Adenine..nM.uM., c(0,1/3,2/3,1), na.rm = TRUE)
+print(paste("tertile cutoffs in (nm/um)= ", paste(quants, collapse=", ")))
+print(paste("tertile cutoffs in (mg/g)= ", paste(quants*MWcre/MWade, collapse=", ")))
+
+T1pats <- rawdata$Adenine..nM.uM. >= quants[1] & rawdata$Adenine..nM.uM. < quants[2]
+T2pats <- rawdata$Adenine..nM.uM. >= quants[2] & rawdata$Adenine..nM.uM. < quants[3]
+T3pats <- rawdata$Adenine..nM.uM. >= quants[3]
+print(paste("Total number of patients ", sum(!is.na(rawdata$Adenine..nM.uM.))))
+
+print(paste("number of patients in T1 ", sum(T1pats, na.rm = TRUE)))
+print(paste("number of patients in T2 ", sum(T2pats, na.rm = TRUE)))
+print(paste("number of patients in T3 ", sum(T3pats, na.rm = TRUE)))
+
+```
+
+# 30% decline at year 1 or ESRD at or prior to visit
+
+```{r outcome1}
+#calculate 30% decline at year 1 or ESRD at or prior to this visit
+t1 <- rawdata$egfr_cric_v5y1
+t0 <- rawdata$egfr_cric_v3y0
+t2 <- rawdata$esrd_v5y1
+rawdata$outcome1 = ((t1-t0)/t0 < -.30) | (t2==1)
+
+#Full
+nevent <- sum(rawdata$outcome1, na.rm = TRUE)
+nevent1 <- sum(rawdata$outcome1[T1pats], na.rm = TRUE)
+nevent2 <- sum(rawdata$outcome1[T2pats], na.rm = TRUE)
+nevent3 <- sum(rawdata$outcome1[T3pats], na.rm = TRUE)
+
+#normo
+nevent_normo <- sum(rawdata$outcome1[normopats], na.rm = TRUE)
+nevent1_normo <- sum(rawdata$outcome1[T1pats & normopats], na.rm = TRUE)
+nevent2_normo <- sum(rawdata$outcome1[T2pats & normopats], na.rm = TRUE)
+nevent3_normo <- sum(rawdata$outcome1[T3pats & normopats], na.rm = TRUE)
+
+#micro
+nevent_micro <- sum(rawdata$outcome1[micropats], na.rm = TRUE)
+nevent1_micro <- sum(rawdata$outcome1[T1pats & micropats], na.rm = TRUE)
+nevent2_micro <- sum(rawdata$outcome1[T2pats & micropats], na.rm = TRUE)
+nevent3_micro <- sum(rawdata$outcome1[T3pats & micropats], na.rm = TRUE)
+
+#macro
+nevent_macro <- sum(rawdata$outcome1[macropats], na.rm = TRUE)
+nevent1_macro <- sum(rawdata$outcome1[T1pats & macropats], na.rm = TRUE)
+nevent2_macro <- sum(rawdata$outcome1[T2pats & macropats], na.rm = TRUE)
+nevent3_macro <- sum(rawdata$outcome1[T3pats & macropats], na.rm = TRUE)
+
+
+
+print(paste("number of events in year 1 (All Tertiles = normo, micro, macro): ",
+            paste(nevent,
+                  paste(nevent_normo, nevent_micro, nevent_macro, sep = " + "),
+                  sep = " = ")))
+
+print(paste("number of events in year 1 (Tertile 1 = normo, micro, macro): ",
+            paste(nevent1,
+                  paste(nevent1_normo, nevent1_micro, nevent1_macro, sep = " + "),
+                  sep = " = ")))
+
+print(paste("number of events in year 1 (Tertile 2 = normo, micro, macro): ",
+            paste(nevent2,
+                  paste(nevent2_normo, nevent2_micro, nevent2_macro, sep = " + "),
+                  sep = " = ")))
+
+print(paste("number of events in year 1 (Tertile 3 = normo, micro, macro): ",
+            paste(nevent3,
+                  paste(nevent3_normo, nevent3_micro, nevent3_macro, sep = " + "),
+                  sep = " = ")))
+
+```
+
+# 30% decline at year 2 or ESRD at or prior to visit
+
+```{r outcome2}
+#calculate 30% decline at year 2 or ESRD at or prior to this visit
+t1 <- rawdata$egfr_cric_v7y2
+t0 <- rawdata$egfr_cric_v3y0
+t2 <- rawdata$esrd_v7y2
+rawdata$outcome1 = ((t1-t0)/t0 < -.3) | (t2==1)
+
+#Full
+nevent <- sum(rawdata$outcome1, na.rm = TRUE)
+nevent1 <- sum(rawdata$outcome1[T1pats], na.rm = TRUE)
+nevent2 <- sum(rawdata$outcome1[T2pats], na.rm = TRUE)
+nevent3 <- sum(rawdata$outcome1[T3pats], na.rm = TRUE)
+
+#normo
+nevent_normo <- sum(rawdata$outcome1[normopats], na.rm = TRUE)
+nevent1_normo <- sum(rawdata$outcome1[T1pats & normopats], na.rm = TRUE)
+nevent2_normo <- sum(rawdata$outcome1[T2pats & normopats], na.rm = TRUE)
+nevent3_normo <- sum(rawdata$outcome1[T3pats & normopats], na.rm = TRUE)
+
+#micro
+nevent_micro <- sum(rawdata$outcome1[micropats], na.rm = TRUE)
+nevent1_micro <- sum(rawdata$outcome1[T1pats & micropats], na.rm = TRUE)
+nevent2_micro <- sum(rawdata$outcome1[T2pats & micropats], na.rm = TRUE)
+nevent3_micro <- sum(rawdata$outcome1[T3pats & micropats], na.rm = TRUE)
+
+#macro
+nevent_macro <- sum(rawdata$outcome1[macropats], na.rm = TRUE)
+nevent1_macro <- sum(rawdata$outcome1[T1pats & macropats], na.rm = TRUE)
+nevent2_macro <- sum(rawdata$outcome1[T2pats & macropats], na.rm = TRUE)
+nevent3_macro <- sum(rawdata$outcome1[T3pats & macropats], na.rm = TRUE)
+
+
+
+print(paste("number of events in year 2 (All Tertiles = normo, micro, macro): ",
+            paste(nevent,
+                  paste(nevent_normo, nevent_micro, nevent_macro, sep = " + "),
+                  sep = " = ")))
+
+print(paste("number of events in year 2 (Tertile 1 = normo, micro, macro): ",
+            paste(nevent1,
+                  paste(nevent1_normo, nevent1_micro, nevent1_macro, sep = " + "),
+                  sep = " = ")))
+
+print(paste("number of events in year 2 (Tertile 2 = normo, micro, macro): ",
+            paste(nevent2,
+                  paste(nevent2_normo, nevent2_micro, nevent2_macro, sep = " + "),
+                  sep = " = ")))
+
+print(paste("number of events in year 2 (Tertile 3 = normo, micro, macro): ",
+            paste(nevent3,
+                  paste(nevent3_normo, nevent3_micro, nevent3_macro, sep = " + "),
+                  sep = " = ")))
+
+```
+
+# 30% decline at year 3 or ESRD at or prior to visit
+```{r outcome3}
+#calculate 30% decline at year 3 or ESRD at or prior to this visit
+t1 <- rawdata$egfr_cric_v9y3
+t0 <- rawdata$egfr_cric_v3y0
+t2 <- rawdata$esrd_v9y3
+rawdata$outcome1 = ((t1-t0)/t0 < -.3) | (t2==1)
+
+#Full
+nevent <- sum(rawdata$outcome1, na.rm = TRUE)
+nevent1 <- sum(rawdata$outcome1[T1pats], na.rm = TRUE)
+nevent2 <- sum(rawdata$outcome1[T2pats], na.rm = TRUE)
+nevent3 <- sum(rawdata$outcome1[T3pats], na.rm = TRUE)
+
+#normo
+nevent_normo <- sum(rawdata$outcome1[normopats], na.rm = TRUE)
+nevent1_normo <- sum(rawdata$outcome1[T1pats & normopats], na.rm = TRUE)
+nevent2_normo <- sum(rawdata$outcome1[T2pats & normopats], na.rm = TRUE)
+nevent3_normo <- sum(rawdata$outcome1[T3pats & normopats], na.rm = TRUE)
+
+#micro
+nevent_micro <- sum(rawdata$outcome1[micropats], na.rm = TRUE)
+nevent1_micro <- sum(rawdata$outcome1[T1pats & micropats], na.rm = TRUE)
+nevent2_micro <- sum(rawdata$outcome1[T2pats & micropats], na.rm = TRUE)
+nevent3_micro <- sum(rawdata$outcome1[T3pats & micropats], na.rm = TRUE)
+
+#macro
+nevent_macro <- sum(rawdata$outcome1[macropats], na.rm = TRUE)
+nevent1_macro <- sum(rawdata$outcome1[T1pats & macropats], na.rm = TRUE)
+nevent2_macro <- sum(rawdata$outcome1[T2pats & macropats], na.rm = TRUE)
+nevent3_macro <- sum(rawdata$outcome1[T3pats & macropats], na.rm = TRUE)
+
+
+
+print(paste("number of events in year 3 (All Tertiles = normo, micro, macro): ",
+            paste(nevent,
+                  paste(nevent_normo, nevent_micro, nevent_macro, sep = " + "),
+                  sep = " = ")))
+
+print(paste("number of events in year 3 (Tertile 1 = normo, micro, macro): ",
+            paste(nevent1,
+                  paste(nevent1_normo, nevent1_micro, nevent1_macro, sep = " + "),
+                  sep = " = ")))
+
+print(paste("number of events in year 3 (Tertile 2 = normo, micro, macro): ",
+            paste(nevent2,
+                  paste(nevent2_normo, nevent2_micro, nevent2_macro, sep = " + "),
+                  sep = " = ")))
+
+print(paste("number of events in year 3 (Tertile 3 = normo, micro, macro): ",
+            paste(nevent3,
+                  paste(nevent3_normo, nevent3_micro, nevent3_macro, sep = " + "),
+                  sep = " = ")))
+
+```

@@ -1,0 +1,235 @@
+---
+title: "C-Stat for 30% and 40% egfr decline events at years 1-6"
+author: "Daniel Montemayor and Rabiul Islam<br><small>Center for Renal Precision Medicine<br>University of Texas Health San Antonio School of Medicine</small>"
+date: "<small>`r Sys.Date()`</small>"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    number_sections: true
+    toc_float: 
+      collapsed: false
+    code_folding: hide
+    theme: cerulean
+---
+
+![Center for Renal Precision Medicine](https://dmontemayor.github.io/assets/Long_SOM/horizontal/JPG/UTHSA_Long-SOM_H_CMYK.jpg)
+
+# Brief
++ 12 ourcomes: 2 outcomes (30% and 40% eGFR decline wrt baseline) at 6 timescales (from 1 to 6 year)
++ predictor is Adenine
++ 4 adjustment levels: no adjustment (Adenine only), minimally adjusted for age and sex , clin adjusted (all clin vars without eGFR and ACR), Fully adj (all clin vars including eGFR and ACR). 
++ 3 groups: fullcohort, NA, MA
+
+```{r requirements, message=FALSE, warning=FALSE}
+#Requirements
+requirements <- c("dplyr", "epiDisplay")
+
+#CRAN repository
+repos <- "http://cran.us.r-project.org"
+
+#install and load missing requirements
+for (pack in requirements){
+  if( !is.element(pack, .packages(all.available = TRUE)) ) {
+    #install.packages(pack, repos = repos)
+    install.packages(pack)
+  }
+  library(pack, character.only = TRUE)
+}
+```
+
+```{r constants}
+#Constants
+MWade = 135.13 # molecular weights for adenine in g/mol
+MWcre = 113.12 #molecular weights for creatinine in g/mol
+
+#Random number seed
+set.seed(10079)
+
+```
+
+```{r download}
+#get data
+rawdata <- read.csv("RedCapUp2.csv")#, stringsAsFactors = TRUE)
+#aadata <- read.csv("CRIC_AA_Combined_final_adding_pipecolate_Creatinine_Normalized.csv")
+```
+
+# Display Adenine cutoff values between tertiles
+```{r partition}
+#get ACR in units of mg/mmol
+rawdata$acr<-(rawdata$urine_albumin_v3y0/rawdata$urine_creatinine_v3y0)*1000/88.42
+
+#select normogroup
+#allpats <- which(rawdata$acr <0)
+normopats <- which(rawdata$acr <3)
+micropats <- which(rawdata$acr >=3 &rawdata$acr <30)
+macropats <- which(rawdata$acr >=30)
+print(paste("number of patients with normo-albuminuria = ", length(normopats)))
+print(paste("number of patients with micro-albuminuria = ", length(micropats)))
+print(paste("number of patients with macro-albuminuria = ", length(macropats)))
+
+#get adenine tertiles cutoff values
+quants <- quantile(rawdata$Adenine..nM.uM., c(0,1/3,2/3,1), na.rm = TRUE)
+print(paste("tertile cutoffs in (nm/um)= ", paste(quants, collapse=", ")))
+print(paste("tertile cutoffs in (mg/g)= ", paste(quants*MWcre/MWade, collapse=", ")))
+
+#define strata
+strata = list(normopats, micropats)
+stratanames = c("Normoalbuminuria", "Microalbuminuria")
+
+```
+
+```{r outcome30}
+#select eGFR
+#EGFR<-rawdata%>%
+#   dplyr::select(egfr_cric_v5y1,egfr_cric_v7y2,egfr_cric_v9y3,egfr_cric_v11y4,egfr_cric_v13y5,egfr_cric_v15y6,egfr_cric_v17y7,egfr_cric_v19y8,egfr_cric_v21y9,egfr_cric_v23y10)
+
+egfrcols <- names(rawdata)[grep("egfr_cric_v", names(rawdata))]
+#loop over years and count events for each year
+for (year in 1:6){
+  #print(year)
+  #calculate 30% decline at each year
+  t1 <- rawdata[, egfrcols[year+1]]  #EGFR[,year]
+  t0 <- rawdata[, egfrcols[1]] #rawdata$egfr_cric_v3y0
+  rawdata[paste("outcome30",year, sep = "_")] = ((t1-t0)/t0 < -.30)   #| (t2==1)
+  #T1events <- sum(rawdata$outcome[T1pats & normopats], na.rm = TRUE)
+  #T2events <- sum(rawdata$outcome[T2pats & normopats], na.rm = TRUE)
+  #T3events <- sum(rawdata$outcome[T3pats & normopats], na.rm = TRUE)
+  #df$year[year] <- year
+  #df$T1[year] <- T1events
+  #df$T2[year] <- T2events
+  #df$T3[year] <- T3events
+}
+```
+
+```{r outcome40}
+#select eGFR
+#EGFR<-rawdata%>%
+#   dplyr::select(egfr_cric_v5y1,egfr_cric_v7y2,egfr_cric_v9y3,egfr_cric_v11y4,egfr_cric_v13y5,egfr_cric_v15y6,egfr_cric_v17y7,egfr_cric_v19y8,egfr_cric_v21y9,egfr_cric_v23y10)
+
+egfrcols <- names(rawdata)[grep("egfr_cric_v", names(rawdata))]
+#loop over years and count events for each year
+for (year in 1:6){
+  #print(year)
+  #calculate 30% decline at each year
+  t1 <- rawdata[, egfrcols[year+1]]  #EGFR[,year]
+  t0 <- rawdata[, egfrcols[1]] #rawdata$egfr_cric_v3y0
+  rawdata[paste("outcome40",year, sep = "_")] = ((t1-t0)/t0 < -.40)   #| (t2==1)
+  #T1events <- sum(rawdata$outcome[T1pats & normopats], na.rm = TRUE)
+  #T2events <- sum(rawdata$outcome[T2pats & normopats], na.rm = TRUE)
+  #T3events <- sum(rawdata$outcome[T3pats & normopats], na.rm = TRUE)
+  #df$year[year] <- year
+  #df$T1[year] <- T1events
+  #df$T2[year] <- T2events
+  #df$T3[year] <- T3events
+}
+```
+
+```{r predictor}
+#rawdata$predictor <- rawdata$Adenine..nM.uM.>quants[2]
+#rawdata$predictor <- rawdata$Adenine..nM.uM.>.1
+#rawdata$predictor <- rawdata$Adenine..nM.uM.>quants[3]
+#rawdata$predictor[rawdata$Adenine..nM.uM.>quants[2] & rawdata$Adenine..nM.uM.<=quants[3]] <- NA
+
+
+#fuction to impute with half the minimum
+impute<-function(x){
+  replace(x, x==0, min(x[x>0], na.rm = TRUE)/2)
+}
+
+#predictor is log2 adenine
+rawdata$predictor<- log2(impute(rawdata$Adenine..nM.uM.))
+
+```
+
+```{r normalize}
+rawdata$age_integer_v3y0 <- scale(rawdata$age_integer_v3y0)
+rawdata$hemoglobin_a1c_v3y0<- scale(rawdata$hemoglobin_a1c_v3y0)
+rawdata$map_v3y0<- scale(rawdata$map_v3y0)
+rawdata$bmi_v3y0<- scale(rawdata$bmi_v3y0)
+rawdata$egfr_cric_v3y0<- scale(rawdata$egfr_cric_v3y0)
+rawdata$acr <- scale(log2(rawdata$acr))
+rawdata$sex_v3y0 <- rawdata$sex_v3y0 == 1 #is Male
+```
+
+```{r adjustments}
+null_vars <- c("predictor")
+minadjvars <- c(null_vars, "age_integer_v3y0", "sex_v3y0")
+adjvars <- c(minadjvars, "hemoglobin_a1c_v3y0", "map_v3y0", "bmi_v3y0")
+fully_adjusted <- c(adjvars, "egfr_cric_v3y0", "acr")
+
+adjustments <- list(null_vars, minadjvars, adjvars, fully_adjusted)
+adjustmentnames <- c("no_adj", "min_adjusted", "adjusted", "fully_adjusted") 
+
+```
+
+```{r metrics}
+model_df <- data.frame(matrix(nrow=1, ncol=7))
+names(model_df) = c("Strata", "Adjustment", "Outcome", "AUC", "95%CI", "Adenine_pvalue", "Likelihood_ratio_test")
+
+#refs likelihood ratio test
+#https://www.statology.org/likelihood-ratio-test-in-r/
+
+#refs for deLongs test for ROC curves
+#https://www.rdocumentation.org/packages/Daim/versions/1.1.0/topics/deLong.test
+```
+
+```{r train}
+#init model index
+mod_idx <- 0
+
+#loop over strata
+for (stidx in 1:length(stratanames)){
+  stratum <- strata[[stidx]]
+  #loop over adjustment
+    for (adjidx in 1:length(adjustmentnames)){
+
+      vars<- adjustments[[adjidx]]
+      outcomes <-  names(rawdata)[grep("outcome", names(rawdata))]
+
+            #loop over outcomes
+      for (outcome in outcomes){
+        #increment model index
+        mod_idx <- mod_idx + 1
+        
+        
+        #format the formula
+        mod_formula <- as.formula( paste(outcome, paste(vars, collapse = "+"), sep = "~"))
+ 
+        #train glm
+        mod <- glm(formula = mod_formula, family = binomial, data = rawdata[stratum, ])
+
+        #calculate reduced model if there is adjustments
+        #if(adjidx>1){
+          #redmod_formula <- as.formula( paste(outcome, paste(vars[2:length(vars)], collapse = "+"), sep = "~"))
+          #redmod <- glm(formula = redmod_formula, family = binomial, data = rawdata[stratum, ])
+        #}
+      
+        #Book keeping columns
+        model_df[mod_idx, "Strata"] <- stratanames[stidx]
+        model_df[mod_idx, "Adjustment"] <- adjustmentnames[adjidx]
+        model_df[mod_idx, "Outcome"] <- outcome
+
+        #return AUC
+        model_df[mod_idx, "AUC"] <-lroc(mod, graph=FALSE)$auc
+        
+        #return Adenine CI
+        model_df[mod_idx, "95%CI"] <- paste("[",paste(confint(mod)[2,], collapse=", "),"]") 
+        
+        #return Adenine p_value
+        model_df[mod_idx, "Adenine_pvalue"] <- summary(mod)$coefficients[2,4]
+  
+        #caluclate likelihood ratio test #to remove predictor  vars[2:length(vars)]
+        #if(adjidx>1){
+          #model_df[mod_idx, "Likelihood_ratio_test"] <- lrtest(mod, redmod)
+        #}
+         
+      }
+    }
+}
+
+```
+
+```{r}
+print(model_df)
+```
